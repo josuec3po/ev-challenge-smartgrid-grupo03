@@ -1,7 +1,7 @@
 import flet as ft
 import random
 import asyncio
-import requests # <--- Nova dependência para conversar com a API
+import requests # <- Nova dependência para conversar com a API
 
 # ========================================================================================
 # PALETA GOODWE (Lógica de carros e preços foi movida para a API)
@@ -387,4 +387,4 @@ async def main(page: ft.Page):
 
     page.run_task(animar_splash)
 
-ft.app(target=main)
+ft.run(main)

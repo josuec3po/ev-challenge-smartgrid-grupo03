@@ -25,6 +25,21 @@ CARROS = [
     {"modelo": "Nissan Leaf (Tekna)",          "tipo": "NMC", "capacidade_kwh": 40.0,  "potencia_max_ac": 6.6},
 ]
 
+# BASE MODEL ---------------------------------------------------------------------
+# A biblioteca Pydantic usa o BaseModel para definir o contrato e esquema de dados que a API aceita receber via JSON.
+# --------------------------------------------------------------------------------
+# 1. Validação de Tipos: Se o Flet enviar uma string ("cem") ou esquecer o campo, 
+# o FastAPI rejeita a requisição imediatamente com um erro 422 Unprocessable Entity. 
+# Isso impede que o seu código Python quebre com exceções não tratadas no meio da execução
+# --------------------------------------------------------------------------------
+# 2. Conversão Automática (Parsing): Transforma o JSON bruto que chega pela 
+# rede em um objeto Python manipulável. Em vez de fazer filtros manuais, 
+# você acessa o valor diretamente com dados.kwh_acumulado.
+# --------------------------------------------------------------------------------
+# 3. Auto-documentação: O Pydantic alimenta a documentação interativa em /docs. 
+# É por causa desse modelo que o Swagger sabe exatamente qual estrutura de JSON mostrar 
+# como exemplo para testes
+
 class ReciboRequest(BaseModel):
     kwh_acumulado: float
 
