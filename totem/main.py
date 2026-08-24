@@ -1,7 +1,6 @@
 import flet as ft
-import random
 import asyncio
-import requests # <- Nova dependência para conversar com a API
+import requests # <- Cliente HTTP: toda a lógica de negócio vive na API
 
 # ========================================================================================
 # PALETA GOODWE (Lógica de carros e preços foi movida para a API)
@@ -34,7 +33,10 @@ async def main(page: ft.Page):
         "Mono": "https://fonts.gstatic.com/s/spacemono/v13/i7dPIFZifjKcF5UAWdDRYEF8RQ.woff2"
     }
 
+    API_URL = "http://127.0.0.1:8000"
+
     estado = {
+        "sessao_id":     None,
         "capacidade_atual": 0.0,
         "potencia_max_atual": 0.0,
         "numero_carros": 1,
@@ -78,17 +80,21 @@ async def main(page: ft.Page):
         txt_status_log.color = cor
 
     # --- COMUNICAÇÃO COM A API ---
+    # Toda a lógica de negócio (sorteio de veículo, balanceamento de carga,
+    # loop de recarga e cálculo do recibo) vive na API. O Totem só chama os
+    # endpoints de sessão e renderiza o estado devolvido.
     def detectar_carro():
         try:
-            # Consulta a API para descobrir o carro e a potência
-            resposta = requests.get("http://127.0.0.1:8000/detectar-veiculo").json()
+            # Cria a sessão de carregamento na API (sorteia o veículo lá)
+            resposta = requests.post(f"{API_URL}/sessao/iniciar").json()
             carro = resposta["carro"]
-            
+
+            estado["sessao_id"] = resposta["sessao_id"]
             estado["numero_carros"] = resposta["numero_carros"]
             estado["p_real_val"] = resposta["potencia_real"]
             estado["capacidade_atual"] = carro["capacidade_kwh"]
             estado["potencia_max_atual"] = carro["potencia_max_ac"]
-            
+
             txt_modelo.value       = carro["modelo"]
             txt_tipo.value         = f'Bateria: {carro["tipo"]}'
             txt_capacidade.value   = f'Capacidade: {carro["capacidade_kwh"]} kWh'
@@ -105,25 +111,26 @@ async def main(page: ft.Page):
         barra_fill.bgcolor = cor
         barra_fill.shadow  = ft.BoxShadow(blur_radius=10, color=cor, spread_radius=1)
 
-    def finalizar_recibo(parcial: bool = False):
+    def finalizar_recibo(recibo: dict, parcial: bool = False):
+        """Recebe o recibo já calculado pela API (a partir do kWh que o
+        próprio servidor acumulou) e só renderiza — o Totem nunca calcula
+        nem envia o consumo, evitando adulteração no terminal físico."""
         btn_pausar.current.visible   = False
         btn_parar.current.visible    = False
         btn_cancelar.current.visible = False
 
-        try:
-            # Envia o consumo para a API calcular o preço
-            payload = {"kwh_acumulado": estado["acumulo"]}
-            recibo = requests.post("http://127.0.0.1:8000/gerar-recibo", json=payload).json()
-            
+        if recibo:
             txt_consumo.value = f"Consumo ({estado['acumulo']:.2f} kWh):   R$ {recibo['consumo_rs']:>6.2f}"
             txt_taxa.value    = f"Taxa fixa:              R$ {recibo['taxa_rs']:>6.2f}"
             txt_imposto.value = f"ISS (5%):               R$ {recibo['imposto_rs']:>6.2f}"
             txt_total.value   = f"TOTAL:                  R$ {recibo['total_rs']:>6.2f}"
-            
+
             recibo_card.visible = True
             btn_reiniciar.current.visible = True
-        except:
+        else:
             log("Erro ao processar pagamento via API", COR_ALERTA)
+            page.update()
+            return
 
         if parcial:
             log(f"Interrompido em {estado['estado_carga']:.1f}% — recibo parcial", COR_PAUSA)
@@ -131,56 +138,49 @@ async def main(page: ft.Page):
             log("Bateria 100% — recibo emitido", COR_VERDE)
         page.update()
 
-    async def loop_carregamento():
-        capacidade = estado["capacidade_atual"]
-        passo = 0.1
-        carga = float(random.randint(10, 50))
-        estado["estado_carga"] = carga
-        estado["acumulo"] = 0.0
+    CORES_LOG = {
+        "gw": COR_GW, "verde": COR_VERDE, "pausa": COR_PAUSA,
+        "alerta": COR_ALERTA, "subtexto": COR_SUBTEXTO,
+    }
 
-        while carga < 100 and estado["rodando"]:
+    async def loop_carregamento():
+        # O loop só dispara requisições de "tick" — toda a matemática da
+        # carga, a flutuação de rede e a detecção de 100% acontecem na API.
+        while estado["rodando"]:
             if estado["pausado"]:
                 await asyncio.sleep(0.2)
                 continue
 
-            if random.random() < 0.15: 
-                acao = random.choice(["entra", "sai"])
-                if acao == "entra" and estado["numero_carros"] < 5:
-                    estado["numero_carros"] += 1
-                    log(f"Novo carro na rede! Divisão de carga: {estado['numero_carros']} un.", COR_ALERTA)
-                elif acao == "sai" and estado["numero_carros"] > 1:
-                    estado["numero_carros"] -= 1
-                    log(f"Veículo saiu. Carga liberada: {estado['numero_carros']} un.", COR_VERDE)
-                
-                try:
-                    # Pergunta para a API a nova potência real devido ao tráfego
-                    url = f"http://127.0.0.1:8000/recalcular-potencia?num_carros={estado['numero_carros']}&potencia_max_carro={estado['potencia_max_atual']}"
-                    nova_p = requests.get(url).json()
-                    estado["p_real_val"] = nova_p["potencia_real"]
-                except:
-                    pass
+            try:
+                resp = requests.post(f"{API_URL}/sessao/{estado['sessao_id']}/tick").json()
+            except Exception:
+                log("Erro de comunicação com a API", COR_ALERTA)
+                await asyncio.sleep(0.4)
+                continue
 
-                txt_carros.value = f'{estado["numero_carros"]} carro(s) simultâneo(s)'
-                txt_p_real.value = f'Potência real: {estado["p_real_val"]} kW'
-                page.update()
+            estado["numero_carros"] = resp["numero_carros"]
+            estado["p_real_val"]    = resp["potencia_real"]
+            estado["estado_carga"]  = resp["estado_carga"]
+            estado["acumulo"]       = resp["acumulo"]
 
-            p = estado["p_real_val"]
-            estado["acumulo"] += p * passo
-            carga += (p * passo / capacidade) * 100
-            
-            if carga > 100: carga = 100
-            
-            estado["estado_carga"] = carga
-            txt_pct.value = f"{carga:.1f}%"
-            txt_kwh.value = f"{estado['acumulo']:.2f} kWh acumulado"
-            atualizar_barra(carga)
+            txt_carros.value = f'{estado["numero_carros"]} carro(s) simultâneo(s)'
+            txt_p_real.value = f'Potência real: {estado["p_real_val"]} kW'
+            txt_pct.value    = f"{estado['estado_carga']:.1f}%"
+            txt_kwh.value    = f"{estado['acumulo']:.2f} kWh acumulado"
+            atualizar_barra(estado["estado_carga"])
+
+            if resp.get("log_msg"):
+                log(resp["log_msg"], CORES_LOG.get(resp.get("log_cor"), COR_SUBTEXTO))
+
             page.update()
+
+            if resp.get("completo"):
+                estado["rodando"] = False
+                finalizar_recibo(resp.get("recibo"), parcial=False)
+                break
+
             await asyncio.sleep(0.4)
 
-        if estado["rodando"]:
-            estado["rodando"] = False
-            finalizar_recibo(parcial=False)
-            
     async def on_conectar(e):
         btn_conectar.current.disabled = True
         log("Cabo conectado...", COR_GW)
@@ -202,23 +202,38 @@ async def main(page: ft.Page):
         btn_cancelar.current.visible = False
         btn_pausar.current.visible   = True
         btn_parar.current.visible    = True
-        estado["rodando"] = True
-        estado["pausado"] = False
         log("Iniciando sessão de recarga...", COR_GW)
         page.update()
+
+        try:
+            # A API sorteia a carga inicial e zera o acumulado da sessão
+            resp = requests.post(f"{API_URL}/sessao/{estado['sessao_id']}/iniciar-carga").json()
+            estado["estado_carga"] = resp["estado_carga"]
+            estado["acumulo"] = resp["acumulo"]
+        except Exception:
+            log("Erro ao iniciar sessão via API", COR_ALERTA)
+            return
+
+        estado["rodando"] = True
+        estado["pausado"] = False
         page.run_task(loop_carregamento)
 
     def on_pausar(e):
-        if not estado["pausado"]:
-            estado["pausado"] = True
+        try:
+            resp = requests.post(f"{API_URL}/sessao/{estado['sessao_id']}/pausar-retomar").json()
+            estado["pausado"] = resp["pausado"]
+        except Exception:
+            log("Erro de comunicação com a API", COR_ALERTA)
+            page.update()
+            return
+
+        if estado["pausado"]:
             btn_pausar.current.content = ft.Text("Retomar", font_family="Mono", size=12, weight=ft.FontWeight.BOLD)
             btn_pausar.current.style.bgcolor = {ft.ControlState.DEFAULT: COR_VERDE, ft.ControlState.DISABLED: COR_BORDA, ft.ControlState.HOVERED: "#66BB6A"}
-            log("Recarga pausada", COR_PAUSA)
         else:
-            estado["pausado"] = False
             btn_pausar.current.content = ft.Text("Pausar", font_family="Mono", size=12, weight=ft.FontWeight.BOLD)
             btn_pausar.current.style.bgcolor = {ft.ControlState.DEFAULT: COR_PAUSA, ft.ControlState.DISABLED: COR_BORDA, ft.ControlState.HOVERED: "#FFD54F"}
-            log(f"Retomando... {estado['p_real_val']} kW", COR_GW)
+        log(resp.get("log_msg", ""), CORES_LOG.get(resp.get("log_cor"), COR_SUBTEXTO))
         page.update()
 
     def on_parar(e):
@@ -228,9 +243,23 @@ async def main(page: ft.Page):
         estado["pausado"] = False
         log("Parando recarga...", COR_ALERTA)
         page.update()
-        finalizar_recibo(parcial=True)
+
+        try:
+            resp = requests.post(f"{API_URL}/sessao/{estado['sessao_id']}/parar").json()
+            estado["estado_carga"] = resp["estado_carga"]
+            estado["acumulo"] = resp["acumulo"]
+            finalizar_recibo(resp.get("recibo"), parcial=True)
+        except Exception:
+            log("Erro ao processar pagamento via API", COR_ALERTA)
+            page.update()
 
     def on_cancelar(e):
+        try:
+            if estado["sessao_id"]:
+                requests.post(f"{API_URL}/sessao/{estado['sessao_id']}/cancelar")
+        except Exception:
+            pass  # cancelamento é best-effort — a UI não deve travar por isso
+
         btn_cancelar.current.disabled = True
         btn_iniciar.current.disabled  = True
         btn_conectar.current.disabled = False
