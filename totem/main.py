@@ -133,7 +133,7 @@ async def main(page: ft.Page):
 
     async def loop_carregamento():
         capacidade = estado["capacidade_atual"]
-        passo = 0.5
+        passo = 0.1
         carga = float(random.randint(10, 50))
         estado["estado_carga"] = carga
         estado["acumulo"] = 0.0
