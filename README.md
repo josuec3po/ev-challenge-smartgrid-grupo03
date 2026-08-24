@@ -2,7 +2,7 @@
 
 O projeto adota uma arquitetura desacoplada **Cliente-Servidor**:
 - **Backend (API):** FastAPI gerenciando lógica de negócios, balanceamento de potência e cobrança.
-- **Frontend (Totem):** Flet (Python/Flutter) operando em Modo Quiosque.
+- **Frontend (Totem):** Flet (Python/Flutter) operando em Modo Totem.
 
 **[Ler a Documentação Arquitetural Completa](docs/ARQUITETURA.md)**
 
