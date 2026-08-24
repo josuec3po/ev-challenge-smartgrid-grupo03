@@ -1,0 +1,11 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ambientes virtuais e Flet
+.venv/
+venv/
+env/
+.flet/
