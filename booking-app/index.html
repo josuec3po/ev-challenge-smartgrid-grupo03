@@ -1,0 +1,1175 @@
+<meta charset="utf-8">
+<title>GoodWe EV Charging</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+
+<style>
+:root{
+  --bench:#EDEEF0; --bench-grid:#E1E3E6; --bench-ink:#1B1B1B; --bench-muted:#6E7175;
+  --app:#FFFFFF; --surface:#F4F5F7; --hairline:#E3E5E8; --hairline-2:#B3B3B3;
+  --ink:#000000; --ink-2:#1B1B1B; --muted:#6E7175;
+  --gw:#E50012; --gw-dark:#9E000D; --gw-light:#FF4D5A; --on-gw:#FFFFFF;
+  --ok:#3E9E43; --warn:#D99700; --alert:#EF5350;
+  --ok-bg:#E9F5EA; --warn-bg:#FBF1DA; --alert-bg:#FCEAEA;
+  --track:#D3D5D8;
+  --map-bg:#E9ECF0; --map-block:#DDE2E8; --map-road:#FFFFFF; --map-line:#C6CDD5;
+  --shadow-1:0 2px 10px rgba(0,0,0,.06);
+  --shadow-2:0 10px 34px rgba(0,0,0,.14);
+  --shadow-gw:0 6px 18px rgba(229,0,18,.30);
+  --phone-shadow:0 40px 90px rgba(0,0,0,.22), 0 6px 18px rgba(0,0,0,.10);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bench:#0B0C0E; --bench-grid:#151719; --bench-ink:#F2F3F5; --bench-muted:#93989F;
+    --app:#131417; --surface:#1C1E22; --hairline:#292C31; --hairline-2:#3B3F45;
+    --ink:#F4F5F7; --ink-2:#DCDEE2; --muted:#9BA0A7;
+    --gw:#FF2B3C; --gw-dark:#C2101E; --gw-light:#FF6672; --on-gw:#FFFFFF;
+    --ok:#5BC45F; --warn:#FFC02E; --alert:#FF6B68;
+    --ok-bg:#17291A; --warn-bg:#2C2413; --alert-bg:#2E1918;
+    --track:#33373D;
+    --map-bg:#191C21; --map-block:#22262C; --map-road:#2F343B; --map-line:#3A4048;
+    --shadow-1:0 2px 10px rgba(0,0,0,.5);
+    --shadow-2:0 10px 34px rgba(0,0,0,.6);
+    --shadow-gw:0 6px 18px rgba(255,43,60,.28);
+    --phone-shadow:0 40px 90px rgba(0,0,0,.75), 0 0 0 1px #24272C;
+  }
+}
+:root[data-theme="dark"]{
+  --bench:#0B0C0E; --bench-grid:#151719; --bench-ink:#F2F3F5; --bench-muted:#93989F;
+  --app:#131417; --surface:#1C1E22; --hairline:#292C31; --hairline-2:#3B3F45;
+  --ink:#F4F5F7; --ink-2:#DCDEE2; --muted:#9BA0A7;
+  --gw:#FF2B3C; --gw-dark:#C2101E; --gw-light:#FF6672; --on-gw:#FFFFFF;
+  --ok:#5BC45F; --warn:#FFC02E; --alert:#FF6B68;
+  --ok-bg:#17291A; --warn-bg:#2C2413; --alert-bg:#2E1918;
+  --track:#33373D;
+  --map-bg:#191C21; --map-block:#22262C; --map-road:#2F343B; --map-line:#3A4048;
+  --shadow-1:0 2px 10px rgba(0,0,0,.5);
+  --shadow-2:0 10px 34px rgba(0,0,0,.6);
+  --shadow-gw:0 6px 18px rgba(255,43,60,.28);
+  --phone-shadow:0 40px 90px rgba(0,0,0,.75), 0 0 0 1px #24272C;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bench);
+  background-image:linear-gradient(var(--bench-grid) 1px,transparent 1px),linear-gradient(90deg,var(--bench-grid) 1px,transparent 1px);
+  background-size:38px 38px;
+  color:var(--bench-ink);
+  font-family:'Archivo',system-ui,-apple-system,'Segoe UI',sans-serif;
+  min-height:100vh;
+  padding:34px 20px 64px;
+}
+.mono{font-family:'Space Mono',ui-monospace,'SFMono-Regular',Menlo,monospace}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* ---------- bench chrome ---------- */
+.bench{max-width:980px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:26px}
+.masthead{display:flex;flex-direction:column;align-items:center;gap:9px;text-align:center;max-width:600px}
+.wordmark{display:flex;align-items:center;gap:11px}
+.wordmark svg{display:block}
+.wordmark h1{font-size:30px;font-weight:700;letter-spacing:-.025em;color:var(--gw)}
+.masthead .kicker{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--bench-muted)}
+.masthead p{font-size:14.5px;line-height:1.55;color:var(--bench-muted);text-wrap:balance}
+
+.stage{display:flex;gap:34px;align-items:flex-start;flex-wrap:wrap;justify-content:center}
+
+/* ---------- device ---------- */
+.device{
+  width:414px;height:868px;flex:0 0 auto;
+  border-radius:52px;padding:12px;
+  background:linear-gradient(160deg,#3A3D42,#131417 55%,#2A2D32);
+  box-shadow:var(--phone-shadow);
+  position:relative;
+}
+.screen{
+  width:390px;height:844px;border-radius:42px;overflow:hidden;
+  background:var(--app);color:var(--ink);
+  position:relative;display:flex;flex-direction:column;
+}
+.notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:118px;height:30px;border-radius:0 0 18px 18px;background:#131417;z-index:60}
+
+/* ---------- app chrome ---------- */
+.statusbar{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;padding:15px 24px 4px;font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--ink)}
+.statusbar .sig{display:flex;gap:5px;align-items:center;opacity:.9}
+.viewport{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;position:relative}
+.viewport::-webkit-scrollbar{display:none}
+.pad{padding:6px 20px 34px;display:flex;flex-direction:column;gap:16px}
+
+.tabbar{
+  flex:0 0 auto;display:flex;padding:9px 6px 20px;gap:2px;
+  background:var(--app);border-top:1px solid var(--hairline);
+  box-shadow:0 -4px 18px rgba(0,0,0,.05);z-index:40;
+}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:0;cursor:pointer;padding:5px 0;color:var(--muted);font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.02em;border-radius:12px}
+.tab svg{width:24px;height:24px;display:block}
+.tab.on{color:var(--gw);font-weight:700}
+.tab[data-tab="sos"]{color:var(--gw)}
+.tab:focus-visible{outline:2px solid var(--gw);outline-offset:2px}
+
+/* ---------- app header ---------- */
+.apphead{display:flex;align-items:center;justify-content:space-between;padding:8px 20px 2px;gap:10px}
+.brandline{display:flex;align-items:center;gap:9px}
+.brandline .bt{display:flex;flex-direction:column;gap:1px}
+.brandline .bt b{font-size:22px;font-weight:700;letter-spacing:-.03em;color:var(--gw);line-height:1}
+.brandline .bt span{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.28em;color:var(--muted)}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--surface);border:1px solid var(--hairline);display:grid;place-items:center;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:var(--muted)}
+
+.nav{display:flex;align-items:center;gap:12px;padding:8px 20px 0}
+.iconbtn{width:34px;height:34px;border-radius:50%;background:var(--surface);border:1px solid var(--hairline);display:grid;place-items:center;cursor:pointer;color:var(--ink);flex:0 0 auto}
+.iconbtn:focus-visible{outline:2px solid var(--gw);outline-offset:2px}
+.nav .navt{display:flex;flex-direction:column;gap:2px}
+.nav .navt b{font-size:20px;font-weight:700;letter-spacing:-.02em}
+.nav .navt span{font-family:'Space Mono',monospace;font-size:8.5px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+
+/* ---------- primitives ---------- */
+.card{background:var(--app);border:1px solid var(--hairline);border-radius:15px;padding:15px;box-shadow:var(--shadow-1)}
+.card.flat{box-shadow:none;background:var(--surface)}
+.eyebrow{font-family:'Space Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.2em;color:var(--gw);text-transform:uppercase}
+.lbl.nocaps{text-transform:none;letter-spacing:.02em}
+.lbl{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.13em;color:var(--muted);text-transform:uppercase}
+.val{font-family:'Space Mono',monospace;font-size:11.5px;font-weight:700;color:var(--ink)}
+.sectionhead{display:flex;justify-content:space-between;align-items:baseline}
+.sectionhead .more{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);background:none;border:0;cursor:pointer}
+
+.btn{border:0;border-radius:26px;cursor:pointer;font-family:'Space Mono',monospace;font-weight:700;letter-spacing:.01em;transition:transform .12s ease,filter .12s ease}
+.btn:active{transform:scale(.975)}
+.btn:focus-visible{outline:2px solid var(--gw);outline-offset:3px}
+.btn-primary{background:var(--gw);color:var(--on-gw);box-shadow:var(--shadow-gw);padding:15px 20px;font-size:14px;width:100%}
+.btn-primary[disabled]{background:var(--track);color:var(--muted);box-shadow:none;cursor:not-allowed}
+.btn-ghost{background:var(--surface);color:var(--ink);border:1px solid var(--hairline);padding:13px 18px;font-size:12.5px;width:100%}
+.btn-sm{background:var(--gw);color:var(--on-gw);padding:9px 16px;font-size:11px;box-shadow:var(--shadow-gw)}
+.btn-sm.off{background:var(--track);color:var(--muted);box-shadow:none;cursor:not-allowed}
+
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:6px;padding:4px 7px;font-family:'Space Mono',monospace;font-size:8px;font-weight:700;letter-spacing:.09em}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.warn{background:var(--warn-bg);color:var(--warn)} .pill.bad{background:var(--alert-bg);color:var(--alert)}
+.dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+.dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--alert)}
+
+.bar{height:22px;border-radius:11px;background:var(--track);overflow:hidden;position:relative}
+.bar > i{display:block;height:100%;border-radius:11px;background:var(--gw);transition:width .5s cubic-bezier(.4,0,.2,1)}
+.bar .tick{position:absolute;top:0;bottom:0;width:2px;background:var(--app);opacity:.85}
+.bar.slim{height:12px;border-radius:8px}
+.bar.slim > i{border-radius:8px}
+
+.metrics{display:flex;justify-content:space-between;gap:12px}
+.metric{display:flex;flex-direction:column;gap:3px;min-width:0}
+
+/* ---------- home ---------- */
+.batterycard .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}
+.batterycard .plate{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--ink-2);background:var(--surface);border:1px solid var(--hairline);border-radius:7px;padding:5px 9px}
+.pctrow{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:12px}
+.pctrow .pct{font-family:'Space Mono',monospace;font-weight:700;font-size:46px;line-height:.95;letter-spacing:-.04em;color:var(--gw)}
+.pctrow .pct sup{font-size:19px;vertical-align:super;letter-spacing:0}
+.pctrow .km{text-align:right;display:flex;flex-direction:column;gap:3px}
+.pctrow .km b{font-family:'Space Mono',monospace;font-size:20px;font-weight:700}
+
+.mapwrap{position:relative;border-radius:15px;overflow:hidden;border:1px solid var(--hairline);background:var(--map-bg)}
+.mapwrap svg{display:block;width:100%;height:auto}
+.mapchip{position:absolute;top:11px;left:11px;background:var(--app);border-radius:20px;padding:7px 11px;display:flex;align-items:center;gap:6px;box-shadow:var(--shadow-1);font-family:'Space Mono',monospace;font-size:9.5px;color:var(--ink-2)}
+.maplegend{position:absolute;bottom:11px;left:11px;background:var(--app);border-radius:11px;padding:8px 10px;display:flex;flex-direction:column;gap:5px;box-shadow:var(--shadow-1)}
+.maplegend div{display:flex;align-items:center;gap:6px;font-family:'Space Mono',monospace;font-size:9px;color:var(--ink-2)}
+.maplegend .dot{width:7px;height:7px}
+.maplocate{position:absolute;bottom:11px;right:11px;width:38px;height:38px;border-radius:50%;background:var(--app);box-shadow:var(--shadow-1);display:grid;place-items:center;border:0;cursor:pointer}
+
+.station{display:flex;flex-direction:column;gap:10px}
+.station .r1{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.station .name{display:flex;align-items:center;gap:8px;min-width:0}
+.station .name b{font-size:13.5px;font-weight:600;letter-spacing:-.005em}
+.station .sub{font-family:'Space Mono',monospace;font-size:9.5px;color:var(--muted);margin-top:2px}
+.station .hr{height:1px;background:var(--hairline)}
+.station .r2{display:flex;justify-content:space-between;align-items:center;gap:10px}
+
+.banner{background:var(--gw);color:var(--on-gw);border-radius:15px;padding:14px;display:flex;gap:12px;align-items:center;box-shadow:var(--shadow-gw)}
+.banner .bt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.banner .bt b{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.08em}
+.banner .bt span{font-size:11.5px;line-height:1.4;opacity:.93}
+.banner button{background:var(--app);color:var(--gw);border:0;border-radius:20px;padding:10px 14px;font-family:'Space Mono',monospace;font-weight:700;font-size:12px;cursor:pointer;flex:0 0 auto}
+
+/* ---------- booking ---------- */
+.stepper{display:flex;gap:6px;padding:0 20px;margin-top:12px}
+.stepper i{flex:1;height:5px;border-radius:3px;background:var(--track);transition:background .3s}
+.stepper i.on{background:var(--gw)}
+.field{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--hairline);border-radius:13px;padding:12px 14px;font-size:13px;color:var(--muted)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border-radius:19px;padding:7px 12px;font-family:'Space Mono',monospace;font-size:10px;background:var(--surface);border:1px solid var(--hairline);color:var(--ink-2);cursor:pointer}
+.chip.on{background:var(--gw);border-color:var(--gw);color:var(--on-gw);font-weight:700}
+
+.pickcard{width:100%;text-align:left;background:var(--app);border:1px solid var(--hairline);border-radius:14px;padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:10px;font:inherit;color:inherit}
+.pickcard.on{border-color:var(--gw);border-width:2px;background:var(--surface);padding:13px}
+.radio{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--hairline-2);display:grid;place-items:center;flex:0 0 auto}
+.pickcard.on .radio{background:var(--gw);border-color:var(--gw)}
+
+.daygrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.day{border-radius:13px;border:1px solid var(--hairline);background:var(--app);padding:10px 2px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font:inherit;color:inherit}
+.day span{font-family:'Space Mono',monospace;font-size:8.5px;letter-spacing:.06em;color:var(--muted)}
+.day b{font-family:'Space Mono',monospace;font-size:16px}
+.day.on{background:var(--gw);border-color:var(--gw)} .day.on span,.day.on b{color:var(--on-gw)}
+
+.conngrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.conn{display:flex;align-items:center;gap:9px;border:1px solid var(--hairline);border-radius:13px;padding:11px;background:var(--app);cursor:pointer;font:inherit;color:inherit;text-align:left}
+.conn b{font-family:'Space Mono',monospace;font-size:11px;display:block}
+.conn span{font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);display:block;margin-top:2px}
+.conn.on{border-color:var(--gw);border-width:2px;padding:10px;background:var(--surface)} .conn.on b{color:var(--gw)}
+.conn[disabled]{opacity:.5;cursor:not-allowed}
+
+.timegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.slot{border:1px solid var(--hairline);border-radius:11px;padding:11px 0;background:var(--app);font-family:'Space Mono',monospace;font-size:12.5px;cursor:pointer;color:var(--ink)}
+.slot.on{background:var(--gw);border-color:var(--gw);color:var(--on-gw);font-weight:700}
+.slot[disabled]{opacity:.45;cursor:not-allowed;background:var(--surface);color:var(--muted)}
+
+.footerbar{flex:0 0 auto;padding:13px 20px;background:var(--app);border-top:1px solid var(--hairline);z-index:30}
+
+.qrbox{background:#FFFFFF;border-radius:16px;padding:16px;display:grid;place-items:center;border:1px solid var(--hairline)}
+.qrbox svg{display:block;width:172px;height:172px}
+.kv{display:flex;justify-content:space-between;gap:14px;padding:9px 0;border-bottom:1px solid var(--hairline)}
+.kv:last-child{border-bottom:0}
+.kv span{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.kv b{font-family:'Space Mono',monospace;font-size:11.5px;text-align:right}
+.policy{background:var(--surface);border:1px solid var(--hairline);border-left:3px solid var(--warn);border-radius:12px;padding:12px 13px;display:flex;flex-direction:column;gap:6px}
+.policy p{font-size:11.5px;line-height:1.5;color:var(--ink-2)}
+.successmark{width:64px;height:64px;border-radius:50%;background:var(--ok);display:grid;place-items:center;margin:0 auto}
+
+/* ---------- sessions ---------- */
+.live{display:inline-flex;align-items:center;gap:6px;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.14em;color:var(--ok)}
+.live i{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.hist{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--hairline)}
+.hist:last-child{border-bottom:0}
+.hist .when{width:46px;flex:0 0 auto;text-align:center;display:flex;flex-direction:column;gap:1px}
+.hist .when b{font-family:'Space Mono',monospace;font-size:15px;line-height:1}
+.hist .when span{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.hist .mid{flex:1;min-width:0}
+.hist .mid b{font-size:12.5px;font-weight:600;display:block}
+.hist .mid span{font-family:'Space Mono',monospace;font-size:9.5px;color:var(--muted)}
+.hist .amt{text-align:right;flex:0 0 auto}
+.hist .amt b{font-family:'Space Mono',monospace;font-size:12.5px;display:block}
+.hist .amt span{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted)}
+
+/* ---------- SOS ---------- */
+.sosidle{display:flex;flex-direction:column;align-items:center;gap:0;padding:14px 20px 24px;text-align:center}
+.sosbtn{
+  width:196px;height:196px;border-radius:50%;border:0;cursor:pointer;
+  background:radial-gradient(circle at 38% 32%,var(--gw-light),var(--gw) 58%,var(--gw-dark));
+  color:#fff;font-family:'Space Mono',monospace;font-weight:700;
+  display:grid;place-items:center;position:relative;margin:22px 0 26px;
+  box-shadow:0 12px 40px rgba(229,0,18,.45);
+}
+.sosbtn .lab{font-size:44px;letter-spacing:.1em;line-height:1}
+.sosbtn .sub{font-size:9px;letter-spacing:.22em;opacity:.9;margin-top:6px}
+.sosbtn::before,.sosbtn::after{content:"";position:absolute;inset:-2px;border-radius:50%;border:2px solid var(--gw);animation:ring 2.6s cubic-bezier(.2,.6,.3,1) infinite}
+.sosbtn::after{animation-delay:1.3s}
+@keyframes ring{0%{transform:scale(1);opacity:.65}100%{transform:scale(1.55);opacity:0}}
+.sosnote{display:flex;gap:9px;text-align:left;background:var(--surface);border:1px solid var(--hairline);border-radius:13px;padding:12px 13px;width:100%}
+.sosnote p{font-size:11.5px;line-height:1.5;color:var(--ink-2)}
+
+.countdown{position:absolute;inset:0;background:var(--gw);color:#fff;z-index:70;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:40px 30px}
+.countdown h2{font-family:'Space Mono',monospace;font-size:14px;letter-spacing:.2em;text-transform:uppercase}
+.countdown p{font-size:13px;line-height:1.5;opacity:.92;text-align:center;max-width:270px;margin-top:10px}
+.cdring{position:relative;width:210px;height:210px;margin:26px 0}
+.cdring svg{transform:rotate(-90deg)}
+.cdring .num{position:absolute;inset:0;display:grid;place-items:center;font-family:'Space Mono',monospace;font-size:82px;font-weight:700}
+.countdown .cancel{background:#fff;color:var(--gw);border:0;border-radius:26px;padding:15px 30px;font-family:'Space Mono',monospace;font-weight:700;font-size:14px;cursor:pointer;margin-top:8px}
+
+.tracktop{background:var(--gw);color:#fff;padding:14px 20px 16px;display:flex;flex-direction:column;gap:3px}
+.tracktop b{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.16em}
+.tracktop span{font-size:19px;font-weight:600;letter-spacing:-.01em}
+.etacard{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.etabig{font-family:'Space Mono',monospace;font-size:34px;font-weight:700;letter-spacing:-.03em;color:var(--gw);line-height:1}
+.driver{display:flex;align-items:center;gap:12px}
+.driver .ph{width:48px;height:48px;border-radius:50%;background:var(--surface);border:1px solid var(--hairline);display:grid;place-items:center;font-family:'Space Mono',monospace;font-weight:700;font-size:15px;color:var(--gw);flex:0 0 auto}
+.callbtn{width:46px;height:46px;border-radius:50%;background:var(--ok);border:0;display:grid;place-items:center;cursor:pointer;flex:0 0 auto;box-shadow:0 5px 14px rgba(62,158,67,.35)}
+.steps{display:flex;flex-direction:column;gap:0}
+.step{display:flex;gap:11px;align-items:flex-start}
+.step .rail{width:20px;flex:0 0 auto;display:flex;flex-direction:column;align-items:center}
+.step .bulb{width:12px;height:12px;border-radius:50%;background:var(--track);margin-top:3px;flex:0 0 auto}
+.step.done .bulb{background:var(--ok)}
+.step.now .bulb{background:var(--gw);box-shadow:0 0 0 4px rgba(229,0,18,.18)}
+.step .line{width:2px;flex:1;background:var(--hairline);min-height:20px}
+.step.done .line{background:var(--ok)}
+.step .txt{padding-bottom:14px}
+.step .txt b{font-size:12.5px;font-weight:600;display:block}
+.step .txt span{font-family:'Space Mono',monospace;font-size:9.5px;color:var(--muted)}
+
+.meter{display:flex;flex-direction:column;gap:7px}
+.meter .mh{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.meter .mh b{font-size:12px;font-weight:600}
+.meter .mh em{font-family:'Space Mono',monospace;font-style:normal;font-size:13px;font-weight:700}
+.budget{display:flex;flex-direction:column;gap:8px}
+.budget .row{display:flex;align-items:center;gap:9px}
+.budget .swatch{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
+.budget .row .t{flex:1;font-size:11.5px}
+.budget .row .n{font-family:'Space Mono',monospace;font-size:11.5px;font-weight:700}
+.stack{height:16px;border-radius:9px;overflow:hidden;display:flex;background:var(--track)}
+.stack i{display:block;height:100%;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.trafficnote{display:flex;gap:9px;align-items:flex-start;background:var(--warn-bg);border-radius:12px;padding:11px 12px}
+.trafficnote p{font-size:11.5px;line-height:1.45;color:var(--ink-2)}
+
+/* ---------- controls rail ---------- */
+.rail{width:250px;flex:0 0 auto;display:flex;flex-direction:column;gap:16px;position:sticky;top:34px}
+.railcard{background:var(--app);border:1px solid var(--hairline);border-radius:16px;padding:16px;box-shadow:var(--shadow-1);display:flex;flex-direction:column;gap:12px;color:var(--ink)}
+.railcard h3{font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--gw)}
+.railcard p{font-size:12px;line-height:1.5;color:var(--muted)}
+.railcard label{font-size:11.5px;color:var(--ink-2);display:flex;justify-content:space-between;gap:8px;font-family:'Space Mono',monospace}
+input[type=range]{width:100%;accent-color:var(--gw)}
+.jump{display:flex;flex-wrap:wrap;gap:7px}
+.jump button{background:var(--surface);border:1px solid var(--hairline);border-radius:9px;padding:7px 10px;font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;color:var(--ink-2)}
+.jump button:hover{border-color:var(--gw);color:var(--gw)}
+.jump button:focus-visible{outline:2px solid var(--gw);outline-offset:2px}
+.palette{display:flex;flex-wrap:wrap;gap:6px}
+.sw{width:100%;display:flex;align-items:center;gap:8px;font-family:'Space Mono',monospace;font-size:9.5px;color:var(--muted)}
+.sw i{width:16px;height:16px;border-radius:4px;border:1px solid rgba(0,0,0,.12)}
+
+.footnote{max-width:620px;text-align:center;font-size:12px;line-height:1.6;color:var(--bench-muted)}
+.footnote code{font-family:'Space Mono',monospace;font-size:11px;background:var(--app);border:1px solid var(--hairline);border-radius:5px;padding:1px 5px;color:var(--ink-2)}
+
+@media (max-width:900px){ .rail{width:100%;max-width:414px;position:static} }
+@media (max-width:460px){
+  body{padding:18px 10px 40px}
+  .device{width:100%;max-width:414px;height:auto;padding:8px;border-radius:38px}
+  .screen{width:100%;height:80vh;min-height:640px;border-radius:32px}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+}
+</style>
+
+<div class="bench">
+  <header class="masthead">
+    <div class="wordmark">
+      <svg width="30" height="34" viewBox="0 0 26 30" aria-hidden="true"><path d="M15.5 0 2 17h8.5L10 30 24 12h-9z" fill="currentColor" style="color:var(--gw)"/></svg>
+      <h1>GoodWe</h1>
+    </div>
+    <div class="kicker">EV Charging App · Protótipo navegável</div>
+    <p>Quatro abas funcionais sobre a paleta do totem GoodWe: Início, Reservar, Sessões e o Resgate Elétrico com rastreio do guincho em tempo real.</p>
+  </header>
+
+  <div class="stage">
+    <div class="device">
+      <div class="notch"></div>
+      <div class="screen" id="screen">
+        <div class="statusbar">
+          <span class="mono" id="clock">9:41</span>
+          <span class="sig">
+            <svg width="70" height="13" viewBox="0 0 70 14" aria-hidden="true" fill="currentColor"><rect y="8" width="3" height="5" rx="1"/><rect x="5" y="6" width="3" height="7" rx="1"/><rect x="10" y="3" width="3" height="10" rx="1"/><rect x="15" width="3" height="13" rx="1"/><path d="M26 12.5 32.5 5.5A9 9 0 0 0 19.5 5.5Z"/><rect x="44" y="2" width="22" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="46" y="4" width="15" height="7" rx="1.5"/><rect x="67" y="5.5" width="2" height="4" rx="1"/></svg>
+          </span>
+        </div>
+        <div class="viewport" id="viewport"></div>
+        <nav class="tabbar" id="tabbar"></nav>
+        <div id="overlay"></div>
+      </div>
+    </div>
+
+    <aside class="rail">
+      <div class="railcard">
+        <h3>Simulador</h3>
+        <label>Bateria do veículo <b class="mono" id="simval">68%</b></label>
+        <input type="range" id="sim" min="3" max="100" value="68" aria-label="Nível de bateria do veículo">
+        <p>Abaixo de 20% o app dispara o banner de alerta crítico na tela Início e sugere o Resgate Elétrico.</p>
+      </div>
+      <div class="railcard">
+        <h3>Ir para</h3>
+        <div class="jump" id="jump"></div>
+      </div>
+      <div class="railcard">
+        <h3>Paleta do projeto</h3>
+        <div class="palette" id="palette"></div>
+      </div>
+    </aside>
+  </div>
+
+  <p class="footnote">Cores e tipografia herdadas de <code>totem/main.py</code> no repositório <code>ev-challenge-smartgrid-grupo03</code> — Space&nbsp;Mono para dados e a paleta GoodWe <code>#E50012</code> / <code>#4CAF50</code> / <code>#FFC107</code> / <code>#EF5350</code>.</p>
+</div>
+
+<script>
+"use strict";
+
+/* ============================ dados ============================ */
+const STATIONS = [
+  {id:'paulista', nome:'GoodWe Hub — Av. Paulista', dist:'0,8 km', horario:'aberto 24h', preco:'R$ 1,70', potencia:'22 kW AC', livres:3, total:4, conn:['Type 2 AC','CCS2'], status:'ok'},
+  {id:'ibira',    nome:'Shopping Ibirapuera — P2', dist:'2,1 km', horario:'08h–23h',    preco:'R$ 1,95', potencia:'60 kW DC', livres:1, total:6, conn:['CCS2','CHAdeMO'], status:'warn'},
+  {id:'berrini',  nome:'Posto Rede Sul — Berrini',  dist:'3,4 km', horario:'aberto 24h', preco:'R$ 2,10', potencia:'150 kW DC',livres:0, total:4, conn:['CCS2','GB/T'], status:'bad'},
+  {id:'vilaol',   nome:'GoodWe Point — Vila Olímpia',dist:'4,2 km',horario:'06h–00h',    preco:'R$ 1,80', potencia:'22 kW AC', livres:4, total:4, conn:['Type 2 AC'], status:'ok'},
+  {id:'farialima',nome:'Eletroposto Faria Lima',    dist:'5,0 km', horario:'aberto 24h', preco:'R$ 2,25', potencia:'90 kW DC', livres:2, total:4, conn:['CCS2','CHAdeMO','GB/T'], status:'ok'}
+];
+const STATUS_LABEL = {ok:'LIVRE', warn:'FILA CURTA', bad:'LOTADA'};
+const CONNECTORS = [
+  {id:'ccs2',   nome:'CCS2',      desc:'DC até 150 kW'},
+  {id:'chademo',nome:'CHAdeMO',   desc:'DC até 62 kW'},
+  {id:'type2',  nome:'Type 2 AC', desc:'AC até 22 kW'},
+  {id:'gbt',    nome:'GB/T',      desc:'DC até 60 kW'}
+];
+const DAYS = [
+  {w:'HOJE',d:'26',full:'qua, 26 ago'},{w:'QUI',d:'27',full:'qui, 27 ago'},{w:'SEX',d:'28',full:'sex, 28 ago'},
+  {w:'SÁB',d:'29',full:'sáb, 29 ago'},{w:'DOM',d:'30',full:'dom, 30 ago'}
+];
+const SLOTS = [
+  {h:'08:00',free:true},{h:'09:30',free:false},{h:'11:00',free:true},
+  {h:'13:00',free:true},{h:'14:30',free:true},{h:'16:00',free:true},
+  {h:'17:30',free:false},{h:'19:00',free:true},{h:'20:30',free:true}
+];
+const HISTORY = [
+  {d:'24',m:'ago',nome:'GoodWe Hub — Av. Paulista',dur:'1h12 · 22 kW AC',kwh:'28,6 kWh',rs:'R$ 53,62'},
+  {d:'19',m:'ago',nome:'Shopping Ibirapuera — P2', dur:'48 min · 60 kW DC',kwh:'41,0 kWh',rs:'R$ 84,95'},
+  {d:'12',m:'ago',nome:'Eletroposto Faria Lima',   dur:'21 min · 90 kW DC',kwh:'15,2 kWh',rs:'R$ 39,20'},
+  {d:'05',m:'ago',nome:'GoodWe Point — Vila Olímpia',dur:'1h34 · 22 kW AC',kwh:'33,8 kWh',rs:'R$ 65,84'}
+];
+const CAP_KWH = 60.5, KM_PER_KWH = 5.2;
+
+/* ============================ estado ============================ */
+const S = {
+  tab:'home',
+  bateria:68,
+  book:{step:1, station:'paulista', day:1, conn:'ccs2', slot:'13:00', code:'GW-4821-KX'},
+  sos:{phase:'idle', count:5, progresso:0, eta:8*60, entregue:0, guincho:62},
+  sessao:{pct:62, kwh:18.4, custo:31.28, min:22}
+};
+let timers = [];
+const clearTimers = () => { timers.forEach(t=>{clearInterval(t);clearTimeout(t);cancelAnimationFrame(t);}); timers=[]; };
+const on = (t,fn) => { timers.push(t); return fn; };
+
+const km = p => Math.round(CAP_KWH * p/100 * KM_PER_KWH);
+const nf = (n,d=1) => n.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const station = id => STATIONS.find(s=>s.id===id);
+const critico = () => S.bateria <= 20;
+
+/* ============================ ícones ============================ */
+const IC = {
+  home:c=>`<svg viewBox="0 0 24 24" fill="none"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" fill="${c}"/></svg>`,
+  book:c=>`<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3" stroke="${c}" stroke-width="2"/><path d="M3 10h18M8 3v4M16 3v4" stroke="${c}" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="15.5" r="2.2" fill="${c}"/></svg>`,
+  bolt:c=>`<svg viewBox="0 0 24 24" fill="none"><path d="M13.5 2 5 13.5h5.5L9.5 22 19 9.5h-6z" fill="${c}"/></svg>`,
+  sos:c=>`<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9.5" stroke="${c}" stroke-width="2"/><path d="M12 6.5v7" stroke="${c}" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="17.2" r="1.4" fill="${c}"/></svg>`,
+  back:`<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 2 4 8l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  search:`<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5.2" stroke="currentColor" stroke-width="1.8"/><path d="M11 11l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+  locate:`<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="5.5" stroke="var(--gw)" stroke-width="1.8"/><circle cx="10" cy="10" r="1.8" fill="var(--gw)"/><path d="M10 0v3M10 17v3M0 10h3M17 10h3" stroke="var(--gw)" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+  check:c=>`<svg width="14" height="14" viewBox="0 0 12 12" fill="none"><path d="M2 6.3 4.7 9 10 3.2" stroke="${c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  phone:`<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4.2 2.5h3l1.4 3.5-2 1.3a10 10 0 0 0 5 5l1.3-2 3.5 1.4v3a1.6 1.6 0 0 1-1.8 1.6C8.4 15.7 4.2 11.5 2.6 4.3A1.6 1.6 0 0 1 4.2 2.5z" fill="#fff"/></svg>`,
+  batt:`<svg width="30" height="30" viewBox="0 0 30 30" fill="none"><rect x="2" y="8" width="20" height="14" rx="3" stroke="#fff" stroke-width="2"/><rect x="24" y="12" width="3.5" height="6" rx="1.4" fill="#fff"/><path d="M13.5 10 8 16.5h4L11 21l6-7h-4.2z" fill="#fff"/></svg>`,
+  info:`<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8" stroke="var(--gw)" stroke-width="1.6"/><path d="M9 8v5" stroke="var(--gw)" stroke-width="1.8" stroke-linecap="round"/><circle cx="9" cy="5.3" r="1" fill="var(--gw)"/></svg>`,
+  traffic:`<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="4.5" y="1.5" width="9" height="15" rx="3" stroke="var(--warn)" stroke-width="1.6"/><circle cx="9" cy="5.5" r="1.6" fill="var(--warn)"/><circle cx="9" cy="9" r="1.6" fill="var(--warn)" opacity=".45"/><circle cx="9" cy="12.5" r="1.6" fill="var(--warn)" opacity=".45"/></svg>`,
+  truck:`<svg width="26" height="20" viewBox="0 0 26 20" fill="none"><path d="M1 4h13v9H1z" fill="#fff"/><path d="M14 7h5l4 4v2h-9z" fill="#fff"/><circle cx="6" cy="15" r="3" fill="#1B1B1B"/><circle cx="18" cy="15" r="3" fill="#1B1B1B"/></svg>`,
+  conn:{
+    ccs2:c=>`<svg width="30" height="30" viewBox="0 0 30 30" fill="none"><circle cx="15" cy="11" r="9.5" stroke="${c}" stroke-width="1.8"/><circle cx="11" cy="8" r="2" fill="${c}"/><circle cx="19" cy="8" r="2" fill="${c}"/><circle cx="15" cy="14" r="1.6" fill="${c}"/><circle cx="10.5" cy="24" r="3.4" fill="${c}"/><circle cx="19.5" cy="24" r="3.4" fill="${c}"/></svg>`,
+    chademo:c=>`<svg width="30" height="30" viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="12.5" stroke="${c}" stroke-width="1.8"/><circle cx="10" cy="10.5" r="2.6" fill="${c}"/><circle cx="20" cy="10.5" r="2.6" fill="${c}"/><circle cx="10" cy="19.5" r="2" fill="${c}"/><circle cx="20" cy="19.5" r="2" fill="${c}"/><circle cx="15" cy="15" r="1.5" fill="${c}"/></svg>`,
+    type2:c=>`<svg width="30" height="30" viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="12.5" stroke="${c}" stroke-width="1.8"/><path d="M3.2 12.5h23.6" stroke="${c}" stroke-width="1.6"/><circle cx="9" cy="9" r="1.8" fill="${c}"/><circle cx="15" cy="7.6" r="1.8" fill="${c}"/><circle cx="21" cy="9" r="1.8" fill="${c}"/><circle cx="9.5" cy="17.5" r="2.2" fill="${c}"/><circle cx="20.5" cy="17.5" r="2.2" fill="${c}"/><circle cx="15" cy="21.8" r="2.2" fill="${c}"/></svg>`,
+    gbt:c=>`<svg width="30" height="30" viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="12.5" stroke="${c}" stroke-width="1.8"/><circle cx="15" cy="7.5" r="2.4" fill="${c}"/><circle cx="22" cy="12" r="2.4" fill="${c}"/><circle cx="8" cy="12" r="2.4" fill="${c}"/><circle cx="11" cy="21" r="2.4" fill="${c}"/><circle cx="19" cy="21" r="2.4" fill="${c}"/></svg>`
+  }
+};
+const COLORVAR = {ok:'var(--ok)',warn:'var(--warn)',bad:'var(--alert)'};
+
+/* ============================ mapa ============================ */
+function pinPath(x,y,c){
+  return `<g><path d="M${x} ${y-20}c-8 0-14.5 6.5-14.5 14.5C${x-14.5} ${y+3} ${x} ${y+13} ${x} ${y+13}s14.5-10 14.5-20C${x+14.5} ${y-13.5} ${x+8} ${y-20} ${x} ${y-20}z" fill="${c}"/><circle cx="${x}" cy="${y-6}" r="5.5" fill="#fff"/><path d="M${x+1.4} ${y-10} ${x-2.8} ${y-5}h2.8l-1.4 3.6 4.2-5h-2.8z" fill="${c}"/></g>`;
+}
+function mapBase(h){
+  const s = h/182;
+  const blk = (x,y,w,hh,alt)=>`<rect x="${x}" y="${y*s}" width="${w}" height="${hh*s}" rx="5" fill="var(--map-${alt?'block':'block'})"/>`;
+  return `
+  <rect width="350" height="${h}" fill="var(--map-bg)"/>
+  ${blk(8,6,94,48)}${blk(124,6,118,48)}${blk(266,6,76,48)}
+  ${blk(8,70,94,42)}${blk(124,70,118,42,1)}${blk(266,70,76,42)}
+  ${blk(8,128,146,48)}${blk(176,128,166,48)}
+  <path d="M0 ${58*s}h350v${10*s}H0z" fill="var(--map-road)"/><path d="M0 ${116*s}h350v${8*s}H0z" fill="var(--map-road)"/>
+  <path d="M108 0h12v${h}h-12z" fill="var(--map-road)"/><path d="M248 0h10v${h}h-10z" fill="var(--map-road)"/>
+  <path d="M0 ${63*s}h350" stroke="var(--map-line)" stroke-width="1" stroke-dasharray="7 7"/>`;
+}
+function homeMap(){
+  const pins = [[58,46,'ok'],[206,44,'warn'],[298,104,'bad'],[196,168,'ok'],[316,150,'ok']];
+  return `<svg viewBox="0 0 350 182" role="img" aria-label="Mapa com estações de recarga próximas">
+    ${mapBase(182)}
+    <circle cx="114" cy="92" r="24" fill="var(--gw)" fill-opacity=".14"/>
+    <circle cx="114" cy="92" r="8.5" fill="var(--ink-2)"/><circle cx="114" cy="92" r="3.6" fill="var(--app)"/>
+    ${pins.map(p=>pinPath(p[0],p[1],COLORVAR[p[2]])).join('')}
+  </svg>`;
+}
+const ROUTE = "M300 34 L300 92 L182 92 L182 150 L96 150 L96 206";
+function rescueMap(){
+  return `<svg viewBox="0 0 350 240" role="img" aria-label="Mapa de rastreamento do guincho elétrico">
+    ${mapBase(240)}
+    <path d="${ROUTE}" fill="none" stroke="var(--gw)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".22"/>
+    <path id="routeline" d="${ROUTE}" fill="none" stroke="var(--gw)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1000" stroke-dashoffset="1000"/>
+    <circle cx="96" cy="206" r="21" fill="var(--gw)" fill-opacity=".15"/>
+    <circle cx="96" cy="206" r="8" fill="var(--ink-2)"/><circle cx="96" cy="206" r="3.4" fill="var(--app)"/>
+    ${pinPath(276,168,'var(--ok)')}
+    <g id="truck" transform="translate(300,34)">
+      <circle r="17" fill="var(--gw)"/><circle r="17" fill="none" stroke="var(--app)" stroke-width="2.5"/>
+      <g transform="translate(-9,-6.5)"><rect x="0" y="0" width="10" height="7.5" rx="1" fill="#fff"/><path d="M10 2.5h3.6l3.2 3.2v1.8H10z" fill="#fff"/><circle cx="4" cy="8.6" r="2" fill="#fff"/><circle cx="14" cy="8.6" r="2" fill="#fff"/><circle cx="4" cy="8.6" r=".9" fill="var(--gw)"/><circle cx="14" cy="8.6" r=".9" fill="var(--gw)"/></g>
+    </g>
+  </svg>`;
+}
+
+/* ============================ blocos ============================ */
+function statusBarClock(){ document.getElementById('clock').textContent = '9:41'; }
+
+function appHeader(){
+  return `<div class="apphead">
+    <div class="brandline">
+      <svg width="26" height="30" viewBox="0 0 26 30" aria-hidden="true"><path d="M15.5 0 2 17h8.5L10 30 24 12h-9z" fill="var(--gw)"/></svg>
+      <div class="bt"><b>GoodWe</b><span>EV CHARGING</span></div>
+    </div>
+    <div class="avatar">MF</div>
+  </div>`;
+}
+function navHeader(titulo, sub, back){
+  return `<div class="nav">
+    ${back?`<button class="iconbtn" data-act="${back}" aria-label="Voltar">${IC.back}</button>`:''}
+    <div class="navt"><b>${esc(titulo)}</b><span>${esc(sub)}</span></div>
+  </div>`;
+}
+function stationCard(s, ctx){
+  const disabled = s.livres === 0;
+  return `<article class="card station">
+    <div class="r1">
+      <div class="name">
+        <i class="dot ${s.status}"></i>
+        <div style="min-width:0">
+          <b>${esc(s.nome)}</b>
+          <div class="sub">${s.dist} · ${s.conn.join(' · ')}</div>
+        </div>
+      </div>
+      <span class="pill ${s.status}">${STATUS_LABEL[s.status]}</span>
+    </div>
+    <div class="hr"></div>
+    <div class="r2">
+      <div class="metrics" style="gap:16px">
+        <div class="metric"><span class="lbl">Preço</span><span class="val">${s.preco}/kWh</span></div>
+        <div class="metric"><span class="lbl">Potência</span><span class="val">${s.potencia}</span></div>
+        <div class="metric"><span class="lbl">Vagas</span><span class="val" style="color:${COLORVAR[s.status]}">${s.livres} de ${s.total}</span></div>
+      </div>
+      <button class="btn btn-sm ${disabled?'off':''}" ${disabled?'disabled':''} data-act="reservar" data-id="${s.id}">${disabled?'Fila':'Reservar'}</button>
+    </div>
+  </article>`;
+}
+
+/* ============================ TELA: INÍCIO ============================ */
+function viewHome(){
+  const p = S.bateria, crit = critico();
+  const cor = crit ? 'var(--alert)' : 'var(--gw)';
+  return `${appHeader()}
+  <div class="pad">
+    ${crit?`<div class="banner">
+      ${IC.batt}
+      <div class="bt">
+        <b>BATERIA CRÍTICA — ${p}%</b>
+        <span>Autonomia ≈ ${km(p)} km. A estação mais próxima está a 0,8 km.</span>
+      </div>
+      <button data-act="go-sos">SOS</button>
+    </div>`:''}
+
+    <section class="card batterycard">
+      <div class="top">
+        <div>
+          <div class="eyebrow">Meu veículo</div>
+          <div style="font-size:16px;font-weight:700;margin-top:4px;letter-spacing:-.01em">BYD Dolphin Plus</div>
+        </div>
+        <span class="plate">GWE-2C41</span>
+      </div>
+      <div class="pctrow">
+        <div class="pct" style="color:${cor}">${p}<sup>%</sup></div>
+        <div class="km">
+          <span class="lbl">Autonomia estimada</span>
+          <b style="color:${crit?'var(--alert)':'var(--ink)'}">≈ ${km(p)} km</b>
+        </div>
+      </div>
+      <div class="bar"><i style="width:${p}%;background:${cor}"></i><span class="tick" style="left:20%"></span></div>
+      <div class="metrics" style="margin-top:11px">
+        <span class="lbl nocaps">${nf(CAP_KWH*p/100)} kWh de ${nf(CAP_KWH)} kWh</span>
+        <span class="lbl nocaps">LFP · AC até 7 kW</span>
+      </div>
+    </section>
+
+    <section class="mapwrap">
+      ${homeMap()}
+      <div class="mapchip"><i class="dot ok"></i>12 estações num raio de 5 km</div>
+      <div class="maplegend">
+        <div><i class="dot ok"></i>Livre</div>
+        <div><i class="dot warn"></i>Fila curta</div>
+        <div><i class="dot bad"></i>Lotada</div>
+      </div>
+      <button class="maplocate" aria-label="Centralizar no meu local">${IC.locate}</button>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:10px">
+      <div class="sectionhead">
+        <span class="eyebrow">Estações próximas</span>
+        <button class="more" data-act="go-book">Ver todas ›</button>
+      </div>
+      ${STATIONS.slice(0,4).map(s=>stationCard(s)).join('')}
+    </section>
+  </div>`;
+}
+
+/* ============================ TELA: RESERVAR ============================ */
+function viewBook(){
+  const b = S.book;
+  if (b.step === 1) return bookStep1();
+  if (b.step === 2) return bookStep2();
+  return bookStep3();
+}
+function bookStep1(){
+  return `${navHeader('Reservar','Etapa 1 de 3 · Escolher estação','go-home')}
+  <div class="stepper"><i class="on"></i><i></i><i></i></div>
+  <div class="pad">
+    <div class="field">${IC.search}<span>Buscar por endereço ou estação</span></div>
+    <div class="chips">
+      <button class="chip on">Todas</button><button class="chip">Livres agora</button>
+      <button class="chip">DC rápido</button><button class="chip">≤ R$ 2</button>
+    </div>
+    <div class="sectionhead"><span class="eyebrow">${STATIONS.length} estações disponíveis</span></div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${STATIONS.map(s=>{
+        const on = S.book.station===s.id;
+        return `<button class="pickcard ${on?'on':''}" data-act="pick-station" data-id="${s.id}">
+          <div class="r1" style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+            <div style="display:flex;align-items:center;gap:8px;min-width:0">
+              <i class="dot ${s.status}"></i>
+              <div style="min-width:0;text-align:left">
+                <b style="font-size:13.5px;font-weight:600">${esc(s.nome)}</b>
+                <div class="sub" style="font-family:'Space Mono',monospace;font-size:9.5px;color:var(--muted);margin-top:2px">${s.dist} · ${s.horario} · ${s.conn.join(' · ')}</div>
+              </div>
+            </div>
+            <span class="radio">${on?IC.check('#fff'):''}</span>
+          </div>
+          <div class="metrics" style="gap:16px;justify-content:flex-start">
+            <div class="metric"><span class="lbl">Preço</span><span class="val">${s.preco}/kWh</span></div>
+            <div class="metric"><span class="lbl">Potência</span><span class="val">${s.potencia}</span></div>
+            <div class="metric"><span class="lbl">Vagas</span><span class="val" style="color:${COLORVAR[s.status]}">${s.livres} de ${s.total}</span></div>
+          </div>
+        </button>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+function bookStep2(){
+  const s = station(S.book.station);
+  const energia = 28.6, custo = energia * parseFloat(s.preco.replace('R$ ','').replace(',','.'));
+  return `${navHeader('Reservar','Etapa 2 de 3 · Data, conector e horário','book-back')}
+  <div class="stepper"><i class="on"></i><i class="on"></i><i></i></div>
+  <div class="pad">
+    <div class="card flat" style="display:flex;align-items:center;gap:12px;border-color:var(--gw);border-width:1.5px">
+      <i style="width:4px;height:34px;border-radius:2px;background:var(--gw);flex:0 0 auto"></i>
+      <div style="flex:1;min-width:0">
+        <b style="font-size:13.5px;font-weight:600">${esc(s.nome)}</b>
+        <div style="font-family:'Space Mono',monospace;font-size:9.5px;color:var(--muted);margin-top:3px">${s.dist} · ${s.potencia} · ${s.preco}/kWh</div>
+      </div>
+      <button class="more" data-act="book-back" style="color:var(--gw);font-weight:700">Trocar</button>
+    </div>
+
+    <section style="display:flex;flex-direction:column;gap:10px">
+      <span class="eyebrow">Data</span>
+      <div class="daygrid">${DAYS.map((d,i)=>`<button class="day ${i===S.book.day?'on':''}" data-act="pick-day" data-i="${i}"><span>${d.w}</span><b>${d.d}</b></button>`).join('')}</div>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:10px">
+      <span class="eyebrow">Tipo de conector</span>
+      <div class="conngrid">${CONNECTORS.map(c=>{
+        const disp = s.conn.some(n=>n.toLowerCase().replace(/[^a-z0-9]/g,'').includes(c.id.replace(/[^a-z0-9]/g,'')) || c.nome===n);
+        const onSel = S.book.conn===c.id && disp;
+        const col = onSel?'var(--gw)':(disp?'var(--ink-2)':'var(--hairline-2)');
+        return `<button class="conn ${onSel?'on':''}" ${disp?'':'disabled'} data-act="pick-conn" data-id="${c.id}">
+          ${IC.conn[c.id](col)}
+          <div><b style="color:${onSel?'var(--gw)':(disp?'var(--ink)':'var(--muted)')}">${c.nome}</b><span>${disp?c.desc:'indisponível aqui'}</span></div>
+        </button>`;
+      }).join('')}</div>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:10px">
+      <span class="eyebrow">Horário</span>
+      <div class="timegrid">${SLOTS.map(t=>`<button class="slot ${S.book.slot===t.h?'on':''}" ${t.free?'':'disabled'} data-act="pick-slot" data-h="${t.h}">${t.h}</button>`).join('')}</div>
+    </section>
+
+    <div class="card flat metrics">
+      <div class="metric"><span class="lbl">Duração</span><span class="val">≈ 45 min</span></div>
+      <div class="metric"><span class="lbl">Energia</span><span class="val">≈ ${nf(energia)} kWh</span></div>
+      <div class="metric"><span class="lbl">Custo est.</span><span class="val" style="color:var(--gw)">R$ ${nf(custo,2)}</span></div>
+    </div>
+  </div>`;
+}
+function qrSvg(seed){
+  const n = 25, cell = 172/n;
+  let r = seed, rnd = () => (r = (r*1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+  let out = `<rect width="172" height="172" fill="#fff"/>`;
+  const finder = (cx,cy) => {
+    out += `<rect x="${cx*cell}" y="${cy*cell}" width="${7*cell}" height="${7*cell}" fill="#000"/>`;
+    out += `<rect x="${(cx+1)*cell}" y="${(cy+1)*cell}" width="${5*cell}" height="${5*cell}" fill="#fff"/>`;
+    out += `<rect x="${(cx+2)*cell}" y="${(cy+2)*cell}" width="${3*cell}" height="${3*cell}" fill="#000"/>`;
+  };
+  const inFinder = (x,y) => (x<8&&y<8)||(x>n-9&&y<8)||(x<8&&y>n-9);
+  for (let y=0;y<n;y++) for (let x=0;x<n;x++){
+    if (inFinder(x,y)) continue;
+    if (rnd() > 0.52) out += `<rect x="${x*cell}" y="${y*cell}" width="${cell}" height="${cell}" fill="#000"/>`;
+  }
+  finder(0,0); finder(n-7,0); finder(0,n-7);
+  out += `<rect x="${9*cell}" y="${9*cell}" width="${7*cell}" height="${7*cell}" fill="#fff"/>`;
+  out += `<path d="M${11.6*cell} ${10.4*cell} ${10*cell} ${13*cell}h${1.4*cell}l-${0.5*cell} ${1.9*cell} ${2.6*cell}-${3.4*cell}h-${1.5*cell}z" fill="#E50012"/>`;
+  return `<svg viewBox="0 0 172 172" role="img" aria-label="Código QR da reserva">${out}</svg>`;
+}
+function bookStep3(){
+  const s = station(S.book.station), d = DAYS[S.book.day];
+  const c = CONNECTORS.find(x=>x.id===S.book.conn);
+  return `${navHeader('Reserva confirmada','Etapa 3 de 3 · Comprovante','book-back')}
+  <div class="stepper"><i class="on"></i><i class="on"></i><i class="on"></i></div>
+  <div class="pad">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:4px">
+      <div class="successmark">${IC.check('#fff').replace('width="14" height="14"','width="30" height="30"')}</div>
+      <div style="text-align:center">
+        <div style="font-size:19px;font-weight:700;letter-spacing:-.02em">Vaga garantida</div>
+        <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);margin-top:4px">${esc(s.nome)}</div>
+      </div>
+    </div>
+
+    <div class="qrbox">${qrSvg(48211)}</div>
+    <div style="text-align:center">
+      <div class="lbl">Código de liberação</div>
+      <div class="mono" style="font-size:22px;font-weight:700;letter-spacing:.1em;margin-top:4px">${S.book.code}</div>
+      <div class="lbl nocaps" style="margin-top:6px">Aproxime o QR do leitor do totem</div>
+    </div>
+
+    <div class="card">
+      <div class="kv"><span>Data</span><b>${d.full}</b></div>
+      <div class="kv"><span>Horário</span><b>${S.book.slot} — ${addMin(S.book.slot,45)}</b></div>
+      <div class="kv"><span>Conector</span><b>${c.nome}</b></div>
+      <div class="kv"><span>Potência</span><b>${s.potencia}</b></div>
+      <div class="kv"><span>Tarifa</span><b>${s.preco}/kWh</b></div>
+      <div class="kv"><span>Custo estimado</span><b style="color:var(--gw)">R$ 48,60</b></div>
+    </div>
+
+    <div class="policy">
+      <div style="display:flex;align-items:center;gap:7px">
+        <span class="lbl" style="color:var(--warn)">Política de cancelamento</span>
+      </div>
+      <p>Cancelamento gratuito até <b>30 minutos</b> antes do horário reservado. Depois disso, é cobrada a taxa fixa de <b>R$ 5,00</b>. A vaga é liberada automaticamente se você não chegar em <b>15 minutos</b> após o horário.</p>
+    </div>
+
+    <button class="btn btn-ghost" data-act="go-sessions">Ver na aba Sessões</button>
+  </div>`;
+}
+function addMin(hhmm, m){
+  const [h,mm] = hhmm.split(':').map(Number);
+  const t = h*60+mm+m;
+  return String(Math.floor(t/60)%24).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
+}
+
+/* ============================ TELA: SESSÕES ============================ */
+function viewSessions(){
+  const s = station('paulista');
+  return `${navHeader('Sessões','Carga ativa e histórico','go-home')}
+  <div class="pad">
+    <section class="card" style="border-color:var(--gw);border-width:1.5px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <span class="live"><i></i>CARREGANDO AGORA</span>
+        <span class="lbl">início 14:32</span>
+      </div>
+      <div style="margin-top:10px;font-size:14.5px;font-weight:600">${esc(s.nome)}</div>
+      <div style="font-family:'Space Mono',monospace;font-size:9.5px;color:var(--muted);margin-top:3px">Vaga 03 · Type 2 AC · 22 kW · ${s.preco}/kWh</div>
+
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin:16px 0 10px">
+        <div class="mono tnum" id="sess-pct" style="font-size:40px;font-weight:700;letter-spacing:-.04em;color:var(--gw);line-height:1">62<sup style="font-size:17px">%</sup></div>
+        <div style="text-align:right">
+          <div class="lbl">Conclui em</div>
+          <div class="mono tnum" id="sess-eta" style="font-size:19px;font-weight:700;margin-top:3px">22 min</div>
+        </div>
+      </div>
+      <div class="bar"><i id="sess-bar" style="width:62%"></i></div>
+      <div class="metrics" style="margin-top:13px">
+        <div class="metric"><span class="lbl">Energia</span><span class="val tnum" id="sess-kwh">18,4 kWh</span></div>
+        <div class="metric"><span class="lbl">Potência real</span><span class="val">18 kW</span></div>
+        <div class="metric" style="text-align:right"><span class="lbl">Custo parcial</span><span class="val tnum" id="sess-rs" style="color:var(--gw)">R$ 31,28</span></div>
+      </div>
+      <div style="display:flex;gap:9px;margin-top:14px">
+        <button class="btn btn-ghost" style="flex:1">Pausar</button>
+        <button class="btn btn-ghost" style="flex:1;color:var(--gw);border-color:var(--gw)">Encerrar</button>
+      </div>
+    </section>
+
+    <section class="card flat">
+      <span class="eyebrow">Agosto</span>
+      <div class="metrics" style="margin-top:11px">
+        <div class="metric"><span class="lbl">Sessões</span><span class="val" style="font-size:15px">12</span></div>
+        <div class="metric"><span class="lbl">Energia</span><span class="val" style="font-size:15px">118,6 kWh</span></div>
+        <div class="metric"><span class="lbl">Total</span><span class="val" style="font-size:15px;color:var(--gw)">R$ 243,61</span></div>
+      </div>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:6px">
+      <div class="sectionhead"><span class="eyebrow">Sessões anteriores</span><span class="lbl">4 de 12</span></div>
+      <div class="card">
+        ${HISTORY.map(h=>`<div class="hist">
+          <div class="when"><b>${h.d}</b><span>${h.m}</span></div>
+          <div class="mid"><b>${esc(h.nome)}</b><span>${h.dur}</span></div>
+          <div class="amt"><b>${h.rs}</b><span>${h.kwh}</span></div>
+        </div>`).join('')}
+      </div>
+    </section>
+  </div>`;
+}
+
+/* ============================ TELA: SOS ============================ */
+function viewSos(){
+  const p = S.sos.phase;
+  if (p === 'idle') return sosIdle();
+  if (p === 'tracking') return sosTracking();
+  if (p === 'charging') return sosCharging();
+  return sosDone();
+}
+function sosIdle(){
+  return `${navHeader('Resgate Elétrico','Socorro para veículo sem carga','go-home')}
+  <div class="sosidle">
+    <button class="sosbtn" data-act="sos-start" aria-label="Acionar resgate elétrico">
+      <span><span class="lab">SOS</span><br><span class="sub">TOQUE PARA ACIONAR</span></span>
+    </button>
+    <div style="max-width:290px">
+      <div style="font-size:16px;font-weight:700;letter-spacing:-.01em">Ficou sem bateria na via?</div>
+      <p style="font-size:12.5px;line-height:1.55;color:var(--muted);margin-top:7px">O guincho elétrico GoodWe leva carga até você e entrega energia suficiente para chegar ao posto mais próximo — com folga para o trânsito.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:9px;width:100%;margin-top:20px">
+      <div class="sosnote">${IC.info}<p><b>Tempo médio de chegada:</b> 8 a 14 minutos na região central de São Paulo.</p></div>
+      <div class="sosnote">${IC.info}<p><b>Sem custo</b> para assinantes GoodWe Plus. Avulso: R$ 89,00 + energia entregue.</p></div>
+    </div>
+  </div>`;
+}
+function sosTracking(){
+  const s = S.sos;
+  const mm = Math.floor(s.eta/60), ss = s.eta%60;
+  return `<div class="tracktop">
+    <b>RESGATE #4821 · A CAMINHO</b>
+    <span>O guincho elétrico está indo até você</span>
+  </div>
+  <div class="pad" style="padding-top:14px">
+    <section class="mapwrap" id="rescuemap">
+      ${rescueMap()}
+      <div class="mapchip"><i class="dot bad"></i>Guincho GW-07 · 2,4 km</div>
+    </section>
+
+    <section class="card etacard">
+      <div>
+        <div class="lbl">Chega em</div>
+        <div class="etabig tnum" id="eta">${mm}:${String(ss).padStart(2,'0')}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="lbl">Sua localização</div>
+        <div style="font-size:12.5px;font-weight:600;margin-top:4px">R. Frei Caneca, 1200</div>
+        <div class="mono" style="font-size:9.5px;color:var(--muted);margin-top:2px">Consolação · São Paulo</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="driver">
+        <div class="ph">RA</div>
+        <div style="flex:1;min-width:0">
+          <b style="font-size:13.5px;font-weight:600">Ricardo Alves</b>
+          <div class="mono" style="font-size:9.5px;color:var(--muted);margin-top:3px">Guincho Elétrico GW-07 · GWE-8842</div>
+          <div class="mono" style="font-size:9.5px;color:var(--warn);margin-top:3px">★ 4,9 · 1.284 atendimentos</div>
+        </div>
+        <button class="callbtn" aria-label="Ligar para o motorista">${IC.phone}</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <span class="eyebrow">Andamento</span>
+      <div class="steps" style="margin-top:12px">
+        <div class="step done"><div class="rail"><i class="bulb"></i><i class="line"></i></div><div class="txt"><b>Chamado recebido</b><span>14:58 · confirmado automaticamente</span></div></div>
+        <div class="step done"><div class="rail"><i class="bulb"></i><i class="line"></i></div><div class="txt"><b>Guincho GW-07 designado</b><span>14:59 · 2,4 km de distância</span></div></div>
+        <div class="step now"><div class="rail"><i class="bulb"></i><i class="line"></i></div><div class="txt"><b>A caminho</b><span id="stepnow">chegando em ${mm} min</span></div></div>
+        <div class="step"><div class="rail"><i class="bulb"></i></div><div class="txt"><b>Carga de emergência</b><span>≈ 12 min no local</span></div></div>
+      </div>
+    </section>
+
+    <button class="btn btn-ghost" data-act="sos-cancel" style="color:var(--gw);border-color:var(--gw)">Cancelar resgate</button>
+  </div>`;
+}
+function sosCharging(){
+  return `<div class="tracktop" style="background:var(--ok)">
+    <b>RESGATE #4821 · CARREGANDO</b>
+    <span>Ricardo chegou e conectou o cabo</span>
+  </div>
+  <div class="pad" style="padding-top:14px">
+    <section class="card">
+      <div class="meter">
+        <div class="mh"><b>Carga entregue ao seu carro</b><em class="tnum" id="ch-kwh" style="color:var(--gw)">0,0 kWh</em></div>
+        <div class="bar"><i id="ch-bar" style="width:0%"></i></div>
+        <div class="metrics" style="margin-top:2px">
+          <span class="lbl nocaps">Sua bateria <b class="tnum" id="ch-pct" style="color:var(--ink)">2%</b></span>
+          <span class="lbl nocaps">Autonomia <b class="tnum" id="ch-km" style="color:var(--ink)">6 km</b></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <span class="eyebrow">Quanto você precisa</span>
+      <div class="stack" style="margin-top:12px">
+        <i id="bg-1" style="width:11%;background:var(--gw)"></i>
+        <i id="bg-2" style="width:23%;background:var(--warn)"></i>
+        <i id="bg-3" style="width:7%;background:var(--ok)"></i>
+      </div>
+      <div class="budget" style="margin-top:12px">
+        <div class="row"><i class="swatch" style="background:var(--gw)"></i><span class="t">Trajeto até o posto mais próximo</span><span class="n">3,2 km</span></div>
+        <div class="row"><i class="swatch" style="background:var(--warn)"></i><span class="t">Reserva para o trânsito parado</span><span class="n">7,0 km</span></div>
+        <div class="row"><i class="swatch" style="background:var(--ok)"></i><span class="t">Margem de segurança</span><span class="n">2,0 km</span></div>
+        <div class="row" style="border-top:1px solid var(--hairline);padding-top:9px;margin-top:2px">
+          <span class="t" style="font-weight:600">Mínimo necessário</span><span class="n">12,2 km</span>
+        </div>
+        <div class="row"><span class="t" style="font-weight:600;color:var(--ok)">GoodWe está entregando</span><span class="n tnum" id="bg-total" style="color:var(--ok)">37 km · 3,0×</span></div>
+      </div>
+      <div class="trafficnote" style="margin-top:12px">${IC.traffic}<p><b>Trânsito intenso</b> na Av. Paulista agora: 12 min para 3,2 km. Por isso a carga extra — você chega mesmo se parar no caminho.</p></div>
+    </section>
+
+    <section class="card flat">
+      <div class="meter">
+        <div class="mh"><b>Bateria do guincho GW-07</b><em class="tnum" id="gw-pct">62%</em></div>
+        <div class="bar slim"><i id="gw-bar" style="width:62%;background:var(--ink-2)"></i></div>
+        <div class="lbl nocaps" style="margin-top:2px">Pack de 82 kWh · pode atender mais 9 resgates hoje</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <span class="eyebrow">Seu destino</span>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:11px">
+        <i class="dot ok" style="width:11px;height:11px"></i>
+        <div style="flex:1;min-width:0">
+          <b style="font-size:13.5px;font-weight:600">GoodWe Hub — Av. Paulista</b>
+          <div class="mono" style="font-size:9.5px;color:var(--muted);margin-top:3px">3,2 km · 12 min no trânsito atual · 22 kW AC</div>
+        </div>
+        <span class="pill ok">3 VAGAS</span>
+      </div>
+      <button class="btn btn-primary" style="margin-top:14px" data-act="sos-finish">Traçar rota até o posto</button>
+    </section>
+  </div>`;
+}
+function sosDone(){
+  return `${navHeader('Resgate concluído','Chamado #4821 · 26 ago, 15:23','go-home')}
+  <div class="pad">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:18px">
+      <div class="successmark">${IC.check('#fff').replace('width="14" height="14"','width="30" height="30"')}</div>
+      <div style="text-align:center">
+        <div style="font-size:19px;font-weight:700;letter-spacing:-.02em">Você tem 37 km de autonomia</div>
+        <div style="font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5">São 3,0× o necessário para chegar ao GoodWe Hub — Av. Paulista, mesmo com o trânsito de agora.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="kv"><span>Energia entregue</span><b>6,0 kWh</b></div>
+      <div class="kv"><span>Bateria do carro</span><b>2% → 12%</b></div>
+      <div class="kv"><span>Tempo no local</span><b>11 min</b></div>
+      <div class="kv"><span>Motorista</span><b>Ricardo Alves · GW-07</b></div>
+      <div class="kv"><span>Resgate</span><b>Incluso no GoodWe Plus</b></div>
+      <div class="kv"><span>Energia entregue</span><b style="color:var(--gw)">R$ 14,40</b></div>
+    </div>
+    <button class="btn btn-primary" data-act="go-book">Reservar vaga no destino</button>
+    <button class="btn btn-ghost" data-act="sos-reset">Voltar ao início do SOS</button>
+  </div>`;
+}
+
+/* ============================ overlay countdown ============================ */
+function countdownHtml(n){
+  const R = 96, CIRC = 2*Math.PI*R;
+  const off = CIRC * (1 - n/5);
+  return `<div class="countdown" role="alertdialog" aria-live="assertive">
+    <h2>Acionando resgate</h2>
+    <div class="cdring">
+      <svg width="210" height="210" viewBox="0 0 210 210">
+        <circle cx="105" cy="105" r="${R}" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="9"/>
+        <circle cx="105" cy="105" r="${R}" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round"
+          stroke-dasharray="${CIRC}" stroke-dashoffset="${off}" style="transition:stroke-dashoffset 1s linear"/>
+      </svg>
+      <div class="num tnum">${n}</div>
+    </div>
+    <p>Um guincho elétrico será enviado para a sua localização atual: R. Frei Caneca, 1200 — Consolação.</p>
+    <button class="cancel" data-act="sos-abort">Cancelar</button>
+  </div>`;
+}
+
+/* ============================ render ============================ */
+const VIEWS = {home:viewHome, book:viewBook, sessions:viewSessions, sos:viewSos};
+const TABS = [
+  {id:'home',label:'Início',icon:'home'},
+  {id:'book',label:'Reservar',icon:'book'},
+  {id:'sessions',label:'Sessões',icon:'bolt'},
+  {id:'sos',label:'SOS',icon:'sos'}
+];
+function footerFor(){
+  if (S.tab==='book' && S.book.step===1) return `<div class="footerbar"><button class="btn btn-primary" data-act="book-next">Continuar  ›</button></div>`;
+  if (S.tab==='book' && S.book.step===2) return `<div class="footerbar"><button class="btn btn-primary" data-act="book-next">Confirmar reserva  ›</button></div>`;
+  if (S.tab==='book' && S.book.step===3) return `<div class="footerbar"><button class="btn btn-primary" data-act="book-restart">Nova reserva</button></div>`;
+  if (S.tab==='sos' && S.sos.phase==='tracking') return `<div class="footerbar"><button class="btn btn-primary" data-act="sos-arrive">Simular chegada do guincho</button></div>`;
+  return '';
+}
+function render(){
+  clearTimers();
+  const vp = document.getElementById('viewport');
+  vp.innerHTML = VIEWS[S.tab]();
+  const old = document.querySelector('.footerbar');
+  if (old) old.remove();
+  const f = footerFor();
+  if (f){
+    const tabbar = document.getElementById('tabbar');
+    tabbar.insertAdjacentHTML('beforebegin', f);
+  }
+  document.getElementById('tabbar').innerHTML = TABS.map(t=>{
+    const active = S.tab===t.id;
+    const col = (active || t.id==='sos') ? 'var(--gw)' : 'var(--muted)';
+    return `<button class="tab ${active?'on':''}" data-tab="${t.id}" aria-current="${active?'page':'false'}">${IC[t.icon](col)}<span>${t.label}</span></button>`;
+  }).join('');
+  vp.scrollTop = 0;
+  if (S.tab==='sessions') animateSession();
+  if (S.tab==='sos' && S.sos.phase==='tracking') animateTracking();
+  if (S.tab==='sos' && S.sos.phase==='charging') animateCharging();
+}
+
+/* ---------- animações ---------- */
+function animateSession(){
+  const bar=document.getElementById('sess-bar'), pct=document.getElementById('sess-pct');
+  const kwh=document.getElementById('sess-kwh'), rs=document.getElementById('sess-rs'), eta=document.getElementById('sess-eta');
+  if(!bar) return;
+  let p = S.sessao.pct;
+  const t = setInterval(()=>{
+    p = Math.min(99, p + 0.35);
+    S.sessao.pct = p;
+    const kw = 18.4 + (p-62)*0.62;
+    bar.style.width = p.toFixed(1)+'%';
+    pct.innerHTML = Math.floor(p)+'<sup style="font-size:17px">%</sup>';
+    kwh.textContent = nf(kw)+' kWh';
+    rs.textContent = 'R$ '+nf(kw*1.70,2);
+    eta.textContent = Math.max(1, Math.round((100-p)*0.6))+' min';
+  }, 900);
+  timers.push(t);
+}
+function animateTracking(){
+  const line = document.querySelector('#routeline');
+  const truck = document.querySelector('#truck');
+  const etaEl = document.getElementById('eta');
+  const stepnow = document.getElementById('stepnow');
+  if (!line || !truck) return;
+  const len = line.getTotalLength();
+  line.style.strokeDasharray = len; line.style.strokeDashoffset = len;
+  const DUR = 26000;
+  const start = performance.now();
+  const totalEta = 8*60;
+  function frame(now){
+    const k = Math.min(1, (now-start)/DUR);
+    line.style.strokeDashoffset = len*(1-k);
+    const pt = line.getPointAtLength(len*k);
+    truck.setAttribute('transform', `translate(${pt.x},${pt.y})`);
+    const left = Math.max(0, Math.round(totalEta*(1-k)));
+    if (etaEl) etaEl.textContent = Math.floor(left/60)+':'+String(left%60).padStart(2,'0');
+    if (stepnow) stepnow.textContent = left>60 ? `chegando em ${Math.ceil(left/60)} min` : 'virando a esquina';
+    if (k<1) timers.push(requestAnimationFrame(frame));
+    else { S.sos.phase='charging'; render(); }
+  }
+  timers.push(requestAnimationFrame(frame));
+}
+function animateCharging(){
+  const bar=document.getElementById('ch-bar'), kwhEl=document.getElementById('ch-kwh');
+  const pctEl=document.getElementById('ch-pct'), kmEl=document.getElementById('ch-km');
+  const gwBar=document.getElementById('gw-bar'), gwPct=document.getElementById('gw-pct');
+  const total=document.getElementById('bg-total');
+  if(!bar) return;
+  const ALVO = 6.0;
+  let k = 0;
+  const t = setInterval(()=>{
+    k = Math.min(1, k + 0.022);
+    const kwh = ALVO*k;
+    const pct = 2 + (kwh/CAP_KWH)*100;
+    const autonomia = Math.round(pct/100*CAP_KWH*KM_PER_KWH);
+    bar.style.width = (k*100).toFixed(1)+'%';
+    kwhEl.textContent = nf(kwh)+' kWh';
+    pctEl.textContent = Math.round(pct)+'%';
+    kmEl.textContent = autonomia+' km';
+    const g = 62 - k*7;
+    gwBar.style.width = g.toFixed(1)+'%';
+    gwPct.textContent = Math.round(g)+'%';
+    total.textContent = autonomia+' km · '+ (autonomia/12.2).toFixed(1).replace('.',',') +'×';
+    if (k>=1) clearInterval(t);
+  }, 260);
+  timers.push(t);
+}
+
+/* ---------- countdown ---------- */
+function startCountdown(){
+  const ov = document.getElementById('overlay');
+  let n = 5;
+  ov.innerHTML = countdownHtml(n);
+  const t = setInterval(()=>{
+    n--;
+    if (n <= 0){
+      clearInterval(t);
+      ov.innerHTML = '';
+      S.sos.phase = 'tracking';
+      render();
+    } else {
+      ov.innerHTML = countdownHtml(n);
+    }
+  }, 1000);
+  timers.push(t);
+  S._cd = t;
+}
+
+/* ============================ eventos ============================ */
+document.getElementById('screen').addEventListener('click', e => {
+  const tab = e.target.closest('[data-tab]');
+  if (tab){ S.tab = tab.dataset.tab; render(); return; }
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const a = el.dataset.act;
+  switch(a){
+    case 'go-home': S.tab='home'; break;
+    case 'go-book': S.tab='book'; S.book.step=1; break;
+    case 'go-sessions': S.tab='sessions'; break;
+    case 'go-sos': S.tab='sos'; S.sos.phase='idle'; break;
+    case 'reservar': S.tab='book'; S.book.station=el.dataset.id; S.book.step=2; syncConn(); break;
+    case 'pick-station': S.book.station=el.dataset.id; syncConn(); break;
+    case 'pick-day': S.book.day=+el.dataset.i; break;
+    case 'pick-conn': S.book.conn=el.dataset.id; break;
+    case 'pick-slot': S.book.slot=el.dataset.h; break;
+    case 'book-next': S.book.step=Math.min(3,S.book.step+1); break;
+    case 'book-back': S.book.step=Math.max(1,S.book.step-1); break;
+    case 'book-restart': S.book.step=1; break;
+    case 'sos-start': startCountdown(); return;
+    case 'sos-abort': clearInterval(S._cd); document.getElementById('overlay').innerHTML=''; return;
+    case 'sos-cancel': S.sos.phase='idle'; break;
+    case 'sos-arrive': S.sos.phase='charging'; break;
+    case 'sos-finish': S.sos.phase='done'; break;
+    case 'sos-reset': S.sos.phase='idle'; break;
+    default: return;
+  }
+  render();
+});
+function syncConn(){
+  const s = station(S.book.station);
+  const ok = CONNECTORS.find(c => s.conn.includes(c.nome));
+  if (ok) S.book.conn = ok.id;
+}
+
+/* ---------- rail ---------- */
+const sim = document.getElementById('sim');
+sim.addEventListener('input', () => {
+  S.bateria = +sim.value;
+  document.getElementById('simval').textContent = S.bateria+'%';
+  if (S.tab==='home') render();
+});
+const JUMPS = [
+  ['Início','home',()=>{}],
+  ['Alerta ≤20%','home',()=>{ S.bateria=14; sim.value=14; document.getElementById('simval').textContent='14%'; }],
+  ['Reservar 1/3','book',()=>{S.book.step=1;}],
+  ['Reservar 2/3','book',()=>{S.book.step=2;}],
+  ['QR da reserva','book',()=>{S.book.step=3;}],
+  ['Sessões','sessions',()=>{}],
+  ['SOS','sos',()=>{S.sos.phase='idle';}],
+  ['Rastreio','sos',()=>{S.sos.phase='tracking';}],
+  ['Carga do guincho','sos',()=>{S.sos.phase='charging';}],
+  ['Resgate concluído','sos',()=>{S.sos.phase='done';}]
+];
+document.getElementById('jump').innerHTML = JUMPS.map((j,i)=>`<button data-j="${i}">${j[0]}</button>`).join('');
+document.getElementById('jump').addEventListener('click', e => {
+  const b = e.target.closest('[data-j]'); if(!b) return;
+  const j = JUMPS[+b.dataset.j];
+  j[2](); S.tab = j[1]; render();
+});
+document.getElementById('palette').innerHTML = [
+  ['#E50012','brand/gw'],['#9E000D','brand/gw-dark'],['#FF4D5A','brand/gw-light'],
+  ['#4CAF50','status/green'],['#FFC107','status/amber'],['#EF5350','status/alert'],
+  ['#B8B8B8','bar/track'],['#B3B3B3','border']
+].map(([hex,name])=>`<span class="sw"><i style="background:${hex}"></i>${hex} · ${name}</span>`).join('');
+
+render();
+</script>
