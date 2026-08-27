@@ -9,3 +9,6 @@ __pycache__/
 venv/
 env/
 .flet/
+# Sistema operacional / editor
+.DS_Store
+.vscode/
