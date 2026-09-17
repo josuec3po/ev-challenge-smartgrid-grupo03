@@ -2,6 +2,7 @@ import flet as ft
 import random
 import asyncio
 import requests # <- Nova dependência para conversar com a API
+from api.pagamento import process_payment, PaymentError
 
 # ========================================================================================
 # PALETA GOODWE (Lógica de carros e preços foi movida para a API)
@@ -43,6 +44,7 @@ async def main(page: ft.Page):
         "p_real_val":    0,
         "rodando":       False,
         "pausado":       False,
+        "valor_total":   0.0,
     }
 
     # ── Textos reativos ──────────────────────────────────────────────────────────────────
@@ -59,12 +61,14 @@ async def main(page: ft.Page):
     txt_taxa         = ft.Text("", size=13, color=COR_TEXTO, font_family="Mono")
     txt_imposto      = ft.Text("", size=13, color=COR_TEXTO, font_family="Mono")
     txt_total        = ft.Text("", size=15, color=COR_GW,    weight=ft.FontWeight.BOLD, font_family="Mono")
+    txt_pagamento_status = ft.Text("", size=13, color=COR_TEXTO, font_family="Mono")
 
     barra_fundo = ft.Container(width=BARRA_W, height=20, bgcolor=COR_BARRA_BG, border_radius=10)
     barra_fill  = ft.Container(width=0, height=20, bgcolor=COR_GW, border_radius=10,
                                shadow=ft.BoxShadow(blur_radius=10, color=COR_GW_ESCURO, spread_radius=1))
     barra_stack = ft.Stack(controls=[barra_fundo, barra_fill], width=BARRA_W, height=20)
 
+    btn_pagar = ft.Ref[ft.FilledButton]()
     btn_conectar  = ft.Ref[ft.FilledButton]()
     btn_iniciar   = ft.Ref[ft.FilledButton]()
     btn_pausar    = ft.Ref[ft.FilledButton]()
@@ -119,9 +123,12 @@ async def main(page: ft.Page):
             txt_taxa.value    = f"Taxa fixa:              R$ {recibo['taxa_rs']:>6.2f}"
             txt_imposto.value = f"ISS (5%):               R$ {recibo['imposto_rs']:>6.2f}"
             txt_total.value   = f"TOTAL:                  R$ {recibo['total_rs']:>6.2f}"
+
+            estado["valor_total"] = recibo["total_rs"]
             
             recibo_card.visible = True
-            btn_reiniciar.current.visible = True
+            btn_pagar.current.visible = True           
+            btn_reiniciar.current.visible = False
         except:
             log("Erro ao processar pagamento via API", COR_ALERTA)
 
@@ -239,12 +246,41 @@ async def main(page: ft.Page):
         log("Cabo desconectado.", COR_SUBTEXTO)
         page.update()
 
+    def on_pagar(e):
+        btn_pagar.current.disabled = True
+        txt_pagamento_status.value = "Processando pagamento..."
+        txt_pagamento_status.color = COR_GW
+        page.update()
+
+        try:
+            resp = requests.post(
+                "http://127.0.0.1:8000/pagamento",
+                json={"amount": estado["valor_total"], "method": "credit_card"}
+            )
+            resp.raise_for_status()
+            resultado = resp.json()
+            txt_pagamento_status.value = f"Pago! ID: {resultado['transaction_id'][:8]}..."
+            txt_pagamento_status.color = COR_VERDE
+            btn_reiniciar.current.visible = True   # só libera "Nova Sessão" após pagar
+        except requests.exceptions.HTTPError as err:
+            detail = err.response.json().get("detail", "Erro desconhecido")
+            txt_pagamento_status.value = f"{detail}"
+            txt_pagamento_status.color = COR_ALERTA
+            btn_pagar.current.disabled = False  # deixa tentar de novo
+        except requests.exceptions.RequestException:
+            txt_pagamento_status.value = "Não foi possível conectar à API."
+            txt_pagamento_status.color = COR_ALERTA
+            btn_pagar.current.disabled = False
+
+        page.update()
+
     def on_reiniciar(e):
-        estado.update({"rodando": False, "pausado": False, "acumulo": 0.0, "estado_carga": 0.0})
+        estado.update({"rodando": False, "pausado": False, "acumulo": 0.0, "estado_carga": 0.0, "valor_total": 0.0})
         txt_modelo.value = txt_tipo.value = txt_capacidade.value = "—"
         txt_potencia_max.value = txt_carros.value = txt_p_real.value = "—"
         txt_pct.value = "0%"
         txt_kwh.value = "0.00 kWh"
+        txt_pagamento_status.value = ""
         recibo_card.visible = False
         btn_pausar.current.content = ft.Text("Pausar", font_family="Mono", size=12, weight=ft.FontWeight.BOLD)
         btn_pausar.current.style.bgcolor = {ft.ControlState.DEFAULT: COR_PAUSA, ft.ControlState.DISABLED: COR_BORDA, ft.ControlState.HOVERED: "#FFD54F"}
@@ -256,6 +292,8 @@ async def main(page: ft.Page):
         btn_iniciar.current.disabled  = True
         btn_iniciar.current.visible   = True
         btn_reiniciar.current.visible = False
+        btn_pagar.current.visible = False
+        btn_pagar.current.disabled = False
         atualizar_barra(0)
         log("Aguardando conexão...")
         page.update()
@@ -333,9 +371,16 @@ async def main(page: ft.Page):
                 recibo_card,
                 ft.Container(
                     padding=ft.Padding.symmetric(horizontal=16, vertical=4),
+                    content=botao("Pagar", on_pagar, COR_GW, btn_pagar, visivel=False),
+                ),
+                ft.Container(
+                    padding=ft.Padding.symmetric(horizontal=16, vertical=2),
+                    content=txt_pagamento_status,
+                ),
+                ft.Container(
+                    padding=ft.Padding.symmetric(horizontal=16, vertical=4),
                     content=botao("Nova Sessão", on_reiniciar, COR_SUBTEXTO, btn_reiniciar, visivel=False),
                 ),
-                ft.Container(height=24),
             ],
         ),
     )

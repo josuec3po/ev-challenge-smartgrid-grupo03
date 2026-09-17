@@ -16,5 +16,5 @@ O projeto adota uma arquitetura desacoplada **Cliente-Servidor**:
     ```
 2. **Inicie o Totem:** Em um segundo terminal, acesse a pasta totem/ e rode:
     ```bash
-    flet run flet_proposta_gw.py
+    flet run main.py
     ```     

@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from api.pagamento import process_payment, PaymentError
 import random
 
 app = FastAPI(title="GoodWe API - SmartGrid EV")
@@ -27,6 +28,11 @@ CARROS = [
 
 class ReciboRequest(BaseModel):
     kwh_acumulado: float
+
+class PagamentoRequest(BaseModel):
+    amount: float
+    method: str = "credit_card"
+
 
 @app.get("/detectar-veiculo")
 def detectar_veiculo():
@@ -64,3 +70,10 @@ def gerar_recibo(dados: ReciboRequest):
         "imposto_rs": imposto,
         "total_rs": total
     }
+
+@app.post("/pagamento")
+def gerar_pagamento(dados: PagamentoRequest):
+    try:
+        return process_payment(dados.amount, dados.method)
+    except PaymentError as e:
+        raise HTTPException(status_code=400, detail=str(e))
