@@ -2,6 +2,9 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from api.pagamento import process_payment, PaymentError
 import random
+import datetime
+import json
+import os
 
 app = FastAPI(title="GoodWe API - SmartGrid EV")
 
@@ -33,6 +36,16 @@ class PagamentoRequest(BaseModel):
     amount: float
     method: str = "credit_card"
 
+# Novo feature
+class BancoDadosRequest(BaseModel):
+    id_sessao: int
+    veiculo: str
+    tipo_carregador: str
+    energia_kWh: float
+    tempo_min: int
+    custo_total: float
+    status: str
+    
 
 @app.get("/detectar-veiculo")
 def detectar_veiculo():
@@ -77,3 +90,34 @@ def gerar_pagamento(dados: PagamentoRequest):
         return process_payment(dados.amount, dados.method)
     except PaymentError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+# 2. A Rota de Persistência
+@app.post("/salvar-historico")
+def salvar_historico(dados: BancoDadosRequest):
+    
+    
+    hora_agora = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
+    
+    # Converte o objeto Pydantic para um dicionário Python
+    novo_registro = dados.model_dump() # Se usar uma versão mais antiga do Pydantic, troque por dados.dict()
+    novo_registro["data_hora"] = hora_agora # Injeta a data gerada pela API
+    
+    caminho_arquivo = "database.json"
+    historico_atual = []
+    
+    # Evita crash se o arquivo não existir ou estiver vazio)
+    if os.path.exists(caminho_arquivo):
+        try:
+            with open(caminho_arquivo, "r", encoding="utf-8") as f:
+                historico_atual = json.load(f)
+        except json.JSONDecodeError:
+            historico_atual = [] # Se o JSON estiver corrompido, força uma nova lista
+            
+    # Passo C: Atualização da lista na memória RAM
+    historico_atual.append(novo_registro)
+    
+    # Sobrescreve arquivo com a lista nova, formatada e indentada)
+    with open(caminho_arquivo, "w", encoding="utf-8") as f:
+        json.dump(historico_atual, f, indent=4, ensure_ascii=False)
+        
+    return {"mensagem": "Sessão salva com sucesso!", "total_registros": len(historico_atual)}

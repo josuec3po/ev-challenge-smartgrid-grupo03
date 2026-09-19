@@ -36,6 +36,8 @@ async def main(page: ft.Page):
     }
 
     estado = {
+        "veiculo_atual": "",
+        "tipo_carregador_atual": "",
         "capacidade_atual": 0.0,
         "potencia_max_atual": 0.0,
         "numero_carros": 1,
@@ -99,6 +101,8 @@ async def main(page: ft.Page):
             txt_potencia_max.value = f'Pot. máx AC: {carro["potencia_max_ac"]} kW'
             txt_carros.value       = f'{estado["numero_carros"]} carro(s) simultâneo(s)'
             txt_p_real.value       = f'Potência real: {estado["p_real_val"]} kW'
+
+            estado["veiculo_atual"] = carro["modelo"]
         except Exception as e:
             log("Erro: Ligue a API primeiro!", COR_ALERTA)
 
@@ -115,27 +119,51 @@ async def main(page: ft.Page):
         btn_cancelar.current.visible = False
 
         try:
-            # Envia o consumo para a API calcular o preço
+            # 1. Envia o consumo para a API calcular o preço em R$
             payload = {"kwh_acumulado": estado["acumulo"]}
             recibo = requests.post("http://127.0.0.1:8000/gerar-recibo", json=payload).json()
             
+            estado["ultimo_valor_total"] = recibo['total_rs']
+            
+            # 2. Atualiza os textos do recibo na tela
             txt_consumo.value = f"Consumo ({estado['acumulo']:.2f} kWh):   R$ {recibo['consumo_rs']:>6.2f}"
             txt_taxa.value    = f"Taxa fixa:              R$ {recibo['taxa_rs']:>6.2f}"
             txt_imposto.value = f"ISS (5%):               R$ {recibo['imposto_rs']:>6.2f}"
             txt_total.value   = f"TOTAL:                  R$ {recibo['total_rs']:>6.2f}"
-
-            estado["valor_total"] = recibo["total_rs"]
             
             recibo_card.visible = True
-            btn_pagar.current.visible = True           
-            btn_reiniciar.current.visible = False
-        except:
-            log("Erro ao processar pagamento via API", COR_ALERTA)
+            
+            # Mostrar botão de pagar ou reiniciar dependendo de como você deixou a interface
+            if btn_pagar.current:
+                btn_pagar.current.visible = True
+            else:
+                btn_reiniciar.current.visible = True
+
+            # =================================================================
+            # 3. MÁGICA DO BANCO DE DADOS: Salvando no JSON via API
+            # =================================================================
+            dados_para_salvar = {
+                "id_sessao": random.randint(10000, 99999),
+                "veiculo": txt_modelo.value,  # Pegamos o nome direto da tela!
+                "tipo_carregador": txt_potencia_max.value, # Pegamos da tela!
+                "energia_kWh": round(estado["acumulo"], 2),
+                "tempo_min": estado.get("tempo_simulado_min", 0),
+                "custo_total": recibo['total_rs'],
+                "status": "PARCIAL" if parcial else "CONCLUIDO"
+            }
+            
+            # Faz o disparo (POST) invisível para a sua nova rota no FastAPI
+            requests.post("http://127.0.0.1:8000/salvar-historico", json=dados_para_salvar)
+            # =================================================================
+
+        except Exception as e:
+            log(f"Erro ao processar recibo/banco de dados: {e}", COR_ALERTA)
 
         if parcial:
-            log(f"Interrompido em {estado['estado_carga']:.1f}% — recibo parcial", COR_PAUSA)
+            log(f"Interrompido em {estado['estado_carga']:.1f}%", COR_PAUSA)
         else:
-            log("Bateria 100% — recibo emitido", COR_VERDE)
+            log("Bateria 100% — Finalizado", COR_VERDE)
+            
         page.update()
 
     async def loop_carregamento():
