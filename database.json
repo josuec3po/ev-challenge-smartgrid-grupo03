@@ -1,0 +1,12 @@
+[
+    {
+        "id_sessao": 78150,
+        "veiculo": "GWM Ora 03 (GT)",
+        "tipo_carregador": "Pot. máx AC: 11.0 kW",
+        "energia_kWh": 42.9,
+        "tempo_min": 0,
+        "custo_total": 81.82650000000005,
+        "status": "CONCLUIDO",
+        "data_hora": "19/09/2026 18:36"
+    }
+]

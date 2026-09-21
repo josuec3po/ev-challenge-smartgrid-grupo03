@@ -12,7 +12,7 @@ O projeto adota uma arquitetura desacoplada **Cliente-Servidor**:
 
 1. **Inicie a API:** Em um terminal, acesse a pasta `api/` e rode:
     ```bash
-    uvicorn main:app --reload
+    uvicorn api.main:app --reload
     ```
 2. **Inicie o Totem:** Em um segundo terminal, acesse a pasta totem/ e rode:
     ```bash
