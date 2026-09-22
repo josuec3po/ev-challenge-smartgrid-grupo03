@@ -8,5 +8,15 @@
         "custo_total": 81.82650000000005,
         "status": "CONCLUIDO",
         "data_hora": "19/09/2026 18:36"
+    },
+    {
+        "id_sessao": 84924,
+        "veiculo": "Renault Megane E-Tech",
+        "tipo_carregador": "Pot. máx AC: 22.0 kW",
+        "energia_kWh": 33.0,
+        "tempo_min": 0,
+        "custo_total": 64.15,
+        "status": "CONCLUIDO",
+        "data_hora": "22/09/2026 20:30"
     }
 ]

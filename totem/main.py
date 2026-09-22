@@ -148,7 +148,7 @@ async def main(page: ft.Page):
                 "tipo_carregador": txt_potencia_max.value, # Pegamos da tela!
                 "energia_kWh": round(estado["acumulo"], 2),
                 "tempo_min": estado.get("tempo_simulado_min", 0),
-                "custo_total": recibo['total_rs'],
+                "custo_total": f"{recibo['total_rs']:.2f}",
                 "status": "PARCIAL" if parcial else "CONCLUIDO"
             }
             
