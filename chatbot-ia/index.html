@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>ChargeGrid AI - Dashboard Comercial</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #E30613;
+      --bg: #F5F5F3;
+      --sidebar: #1A1A1A;
+      --card-bg: #FFFFFF;
+      --text: #1A1A1A;
+      --border: #E5E5E0;
+    }
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+    }
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 100%;
+      width: 220px;
+      background-color: var(--sidebar);
+      color: #fff;
+      transition: width 0.3s ease;
+      overflow: hidden;
+      z-index: 100;
+    }
+    .sidebar .logo {
+      padding: 25px 20px;
+      font-weight: 600;
+      font-size: 1.3em;
+      border-bottom: 1px solid #333;
+      color: var(--primary);
+    }
+    .sidebar nav {
+      display: flex;
+      flex-direction: column;
+      padding-top: 10px;
+    }
+    .sidebar nav a {
+      padding: 15px 20px;
+      color: #ccc;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9em;
+    }
+    .sidebar nav a:hover { background-color: #333; color: #fff; }
+
+    /* Header */
+    .header {
+      margin-left: 220px;
+      padding: 15px 25px;
+      background-color: #fff;
+      border-bottom: 1px solid #EBEBEB;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header .status-tag {
+      background: #ECFDF5;
+      color: #059669;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.85em;
+      font-weight: 500;
+    }
+
+    /* Main Grid */
+    .main-content {
+      margin-left: 220px;
+      padding: 25px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      padding: 20px;
+    }
+    .card h3 { margin: 0 0 15px 0; font-size: 1em; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Sessão Info */
+    .big-number { font-size: 36px; font-weight: 600; margin: 10px 0; }
+    .progress-container { margin: 15px 0; }
+    .progress-bar {
+      height: 10px;
+      background-color: #EBEBEB;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background-color: #10B981;
+      width: 0;
+      transition: width 1s ease-in-out;
+    }
+
+    /* Chat Section */
+    .chat-card { grid-row: span 2; display: flex; flex-direction: column; height: 600px; }
+    .messages { flex: 1; overflow-y: auto; padding: 15px; background: #F9FAFB; border-radius: 8px; border: 1px solid #F3F4F6; margin-bottom: 15px; }
+    .msg { padding: 10px 14px; border-radius: 12px; margin: 8px 0; max-width: 85%; font-size: 0.95em; line-height: 1.4; }
+    .msg.user { background-color: var(--primary); color: #fff; margin-left: auto; border-bottom-right-radius: 2px; }
+    .msg.agent { background-color: #fff; border: 1px solid var(--border); margin-right: auto; border-bottom-left-radius: 2px; }
+    
+    .chat-controls { display: flex; gap: 10px; }
+    .chat-controls input { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; outline: none; }
+    .chat-controls input:focus { border-color: var(--primary); }
+    
+    .btn {
+      background-color: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn-secondary { background-color: #6B7280; }
+
+    .chips { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .chip { background: #F3F4F6; padding: 6px 12px; border-radius: 16px; font-size: 0.8em; cursor: pointer; border: 1px solid #E5E7EB; }
+    .chip:hover { background: #E5E7EB; }
+
+    /* Connector Grid */
+    .connector-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
+    .conn { height: 60px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #fff; font-size: 0.8em; }
+    .conn.busy { background-color: var(--primary); }
+    .conn.free { background-color: #10B981; }
+
+    @media (max-width: 768px) {
+      .sidebar { width: 100%; height: 60px; bottom: 0; top: auto; display: flex; }
+      .sidebar .logo { display: none; }
+      .sidebar nav { flex-direction: row; width: 100%; justify-content: space-around; padding: 0; }
+      .header, .main-content { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">ChargeGrid</div>
+    <nav>
+      <a href="#">🏠 Dashboard</a>
+      <a href="#">⚡ Sessões</a>
+      <a href="#">💬 Suporte IA</a>
+      <a href="#">⚙️ Config</a>
+    </nav>
+  </div>
+
+  <div class="header">
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <h2 style="margin:0; font-size: 1.1em;" id="stationName">Carregando posto...</h2>
+      <span class="status-tag">● ONLINE</span>
+    </div>
+    <button class="btn btn-secondary" onclick="resetChat()" style="font-size: 0.8em;">Limpar Histórico</button>
+  </div>
+
+  <div class="main-content">
+    <div class="grid">
+      <!-- Card Sessão -->
+      <div class="card">
+        <h3>Sessão de Recarga Atual</h3>
+        <div class="big-number" id="kwh">0.0 kWh</div>
+        <div style="color: #666; font-size: 0.9em;">
+          Potência: <span id="kw" style="font-weight: 600; color: var(--text);">0.0 kW</span>
+        </div>
+        <div class="progress-container">
+          <div style="display: flex; justify-content: space-between; font-size: 0.8em; margin-bottom: 5px;">
+            <span>Estado de Carga (SoC)</span>
+            <span id="socText">0%</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+        </div>
+        <div style="font-size: 0.85em; color: #666;">
+          Tempo decorrido: <span id="time">0</span> min
+        </div>
+      </div>
+
+      <!-- Card Financeiro -->
+      <div class="card">
+        <h3>Faturamento Estimado</h3>
+        <div class="big-number" id="cost" style="color: #10B981;">R$ 0,00</div>
+        <div style="margin-top: 15px; padding: 10px; background: #F9FAFB; border-radius: 8px; font-size: 0.85em;">
+          Tarifa Comercial: <span id="tariff" style="font-weight: 600;">R$ 0,00/kWh</span>
+        </div>
+        <p style="font-size: 0.75em; color: #999; margin-top: 10px;">* Valores calculados em tempo real pela IA.</p>
+      </div>
+
+      <!-- Card Chat IA -->
+      <div class="card chat-card">
+        <h3>💬 ChargeGrid Assistant</h3>
+        <div class="messages" id="messages">
+          <div class="msg agent">Olá! Sou o assistente do ChargeGrid. Posso te ajudar com informações sobre a recarga da GoodWe ou cálculos de tarifa. Como posso ajudar?</div>
+        </div>
+        <div class="chat-controls">
+          <input type="text" id="chatInput" placeholder="Pergunte sobre a recarga...">
+          <button class="btn" onclick="sendMessage()">Enviar</button>
+        </div>
+        <div class="chips">
+          <div class="chip" onclick="quickMsg('Quanto já gastei?')">💰 Quanto já gastei?</div>
+          <div class="chip" onclick="quickMsg('Quanto tempo falta?')">⏳ Quanto tempo falta?</div>
+          <div class="chip" onclick="quickMsg('Status do posto')">📊 Status do posto</div>
+        </div>
+      </div>
+
+      <!-- Card Infra -->
+      <div class="card">
+        <h3>Status da Infraestrutura</h3>
+        <div class="connector-grid">
+          <div class="conn busy">#1</div>
+          <div class="conn busy">#2</div>
+          <div class="conn busy">#3</div>
+          <div class="conn free">#4</div>
+        </div>
+        <div style="font-size: 0.9em; color: #666;">
+          Carga Total: <span id="totalPower" style="font-weight: 600; color: var(--text);">0 kW</span> / 100 kW
+        </div>
+        <div class="progress-bar" style="margin-top: 10px;"><div class="progress-fill" id="demandBar" style="background-color: var(--primary);"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:5000/api';
+
+    async function updateDashboard() {
+      try {
+        const response = await fetch(`${API_URL}/status`);
+        const data = await response.json();
+        
+        const s = data.sessao_ativa;
+        const e = data.eletroposto;
+        const t = data.tarifa_vigente_kwh;
+
+        document.getElementById('stationName').innerText = e.nome;
+        document.getElementById('kwh').innerText = `${s.kwh_consumido.toFixed(1)} kWh`;
+        document.getElementById('kw').innerText = `${s.potencia_atual_kw.toFixed(1)} kW`;
+        document.getElementById('socText').innerText = `${s.soc_percentual}%`;
+        document.getElementById('progress').style.width = `${s.soc_percentual}%`;
+        document.getElementById('time').innerText = s.tempo_decorrido_min;
+        
+        const cost = (s.kwh_consumido * t).toFixed(2);
+        document.getElementById('cost').innerText = `R$ ${cost.replace('.', ',')}`;
+        document.getElementById('tariff').innerText = `R$ ${t.toFixed(2)}/kWh`;
+
+        document.getElementById('totalPower').innerText = `${e.potencia_total_disponivel_kw} kW`;
+        const demandPct = (e.potencia_total_disponivel_kw / 100) * 100;
+        document.getElementById('demandBar').style.width = `${demandPct}%`;
+
+      } catch (error) {
+        console.error('Erro ao conectar com a API:', error);
+      }
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      addMessage(text, 'user');
+      input.value = '';
+
+      try {
+        const response = await fetch(`${API_URL}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text })
+        });
+        const data = await response.json();
+        addMessage(data.response, 'agent');
+      } catch (error) {
+        addMessage('Erro de conexão. Verifique se o backend está rodando.', 'agent');
+      }
+    }
+
+    async function resetChat() {
+      await fetch(`${API_URL}/reset`, { method: 'POST' });
+      document.getElementById('messages').innerHTML = '<div class="msg agent">Histórico limpo. Como posso ajudar agora?</div>';
+    }
+
+    function addMessage(text, sender) {
+      const container = document.getElementById('messages');
+      const div = document.createElement('div');
+      div.className = `msg ${sender}`;
+      div.innerText = text;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function quickMsg(text) {
+      document.getElementById('chatInput').value = text;
+      sendMessage();
+    }
+
+    updateDashboard();
+    setInterval(updateDashboard, 5000);
+
+    document.getElementById('chatInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+  </script>
+</body>
+</html>
