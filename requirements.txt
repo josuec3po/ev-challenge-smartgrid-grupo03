@@ -1,0 +1,12 @@
+# API
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.7
+
+# Totem
+flet>=0.28
+requests>=2.32
+
+# Testes
+pytest>=8.0
+httpx>=0.27
