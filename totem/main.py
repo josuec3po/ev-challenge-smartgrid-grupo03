@@ -2,7 +2,12 @@ import flet as ft
 import random
 import asyncio
 import requests # <- Nova dependência para conversar com a API
-from api.pagamento import process_payment, PaymentError
+
+# NOTA DE ARQUITETURA: o totem NÃO importa nada de api/.
+# Havia aqui um `from api.pagamento import process_payment, PaymentError`
+# que quebrava a separação cliente-servidor descrita em docs/ARQUITETURA.md:
+# com ele, o terminal físico conseguiria aprovar o próprio pagamento sem
+# passar pela API. O totem fala com a API só por HTTP, como já faz em on_pagar.
 
 # ========================================================================================
 # PALETA GOODWE (Lógica de carros e preços foi movida para a API)
