@@ -1,12 +1,18 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from api.pagamento import process_payment, PaymentError
+from api.pagamentos.router import router as router_pagamentos
 import random
 import datetime
 import json
 import os
 
 app = FastAPI(title="GoodWe API - SmartGrid EV")
+
+# Módulo de pagamentos: POST /pagamentos, GET /pagamentos/{id}, webhook.
+# A rota antiga POST /pagamento continua funcionando (ver mais abaixo),
+# mas está marcada como deprecated.
+app.include_router(router_pagamentos)
 
 # Constantes de Negócio
 GW22K = 22
@@ -84,8 +90,19 @@ def gerar_recibo(dados: ReciboRequest):
         "total_rs": total
     }
 
-@app.post("/pagamento")
+@app.post("/pagamento", deprecated=True)
 def gerar_pagamento(dados: PagamentoRequest):
+    """
+    OBSOLETA — mantida só para não quebrar o totem durante a migração.
+
+    Problemas desta rota, resolvidos em POST /pagamentos:
+      - sem idempotência: dois cliques cobram duas vezes
+      - resultado aleatório (10% de falha), impossível de demonstrar
+      - valor em float, sem vínculo com a sessão, sem persistência
+      - síncrona: não comporta Pix, que confirma por webhook
+
+    Migre o totem para POST /pagamentos e remova esta rota.
+    """
     try:
         return process_payment(dados.amount, dados.method)
     except PaymentError as e:

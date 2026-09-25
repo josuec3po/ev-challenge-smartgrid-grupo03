@@ -9,3 +9,6 @@ __pycache__/
 venv/
 env/
 .flet/
+# Dados locais de pagamento (gerados em runtime)
+data/
+*.corrompido.json
