@@ -8,5 +8,25 @@
         "custo_total": 81.82650000000005,
         "status": "CONCLUIDO",
         "data_hora": "19/09/2026 18:36"
+    },
+    {
+        "id_sessao": 48493,
+        "veiculo": "BYD Dolphin (Entrada)",
+        "tipo_carregador": "Pot. máx AC: 7.0 kW",
+        "energia_kWh": 40.6,
+        "tempo_min": 0,
+        "custo_total": 77.72100000000003,
+        "status": "CONCLUIDO",
+        "data_hora": "25/09/2026 18:19"
+    },
+    {
+        "id_sessao": 57635,
+        "veiculo": "GWM Ora 03 (Skin)",
+        "tipo_carregador": "Pot. máx AC: 11.0 kW",
+        "energia_kWh": 29.7,
+        "tempo_min": 0,
+        "custo_total": 58.26450000000003,
+        "status": "CONCLUIDO",
+        "data_hora": "25/09/2026 18:30"
     }
 ]

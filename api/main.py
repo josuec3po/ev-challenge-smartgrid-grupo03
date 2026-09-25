@@ -5,8 +5,17 @@ import random
 import datetime
 import json
 import os
+import uuid
+import io
+import base64
+import qrcode
 
 app = FastAPI(title="GoodWe API - SmartGrid EV")
+
+# Chave Pix fictícia usada apenas para a simulação do projeto
+CHAVE_PIX_POSTO = "posto-goodwe@exemplo.com"
+NOME_RECEBEDOR  = "POSTO GOODWE"
+CIDADE_RECEBEDOR = "SAO PAULO"
 
 # Constantes de Negócio
 GW22K = 22
@@ -36,6 +45,9 @@ class PagamentoRequest(BaseModel):
     amount: float
     method: str = "credit_card"
 
+class PixRequest(BaseModel):
+    amount: float
+
 # Novo feature
 class BancoDadosRequest(BaseModel):
     id_sessao: int
@@ -46,6 +58,73 @@ class BancoDadosRequest(BaseModel):
     custo_total: float
     status: str
     
+
+def _tlv(id_campo: str, valor: str) -> str:
+    """Monta um campo no formato TLV (ID + Tamanho + Valor) usado no padrão EMV do Pix."""
+    tamanho = str(len(valor)).zfill(2)
+    return f"{id_campo}{tamanho}{valor}"
+
+
+def _calcular_crc16(payload: str) -> str:
+    """CRC16-CCITT (falso), exigido no final de todo BR Code Pix."""
+    polinomio = 0x1021
+    resultado = 0xFFFF
+    for byte in payload.encode("utf-8"):
+        resultado ^= byte << 8
+        for _ in range(8):
+            if resultado & 0x8000:
+                resultado = (resultado << 1) ^ polinomio
+            else:
+                resultado <<= 1
+            resultado &= 0xFFFF
+    return format(resultado, "04X")
+
+
+def gerar_payload_pix(valor: float, id_transacao: str) -> str:
+    """
+    Monta o 'Pix Copia e Cola' (BR Code) seguindo o padrão EMV do Banco Central.
+    Isso é o que vira o QR Code — qualquer app de banco consegue ler essa string.
+    """
+    merchant_account = _tlv("26", _tlv("00", "br.gov.bcb.pix") + _tlv("01", CHAVE_PIX_POSTO))
+
+    payload_sem_crc = (
+        _tlv("00", "01")                                   # Payload Format Indicator
+        + merchant_account                                  # Dados da chave Pix
+        + _tlv("52", "0000")                                 # Merchant Category Code
+        + _tlv("53", "986")                                  # Moeda: Real (BRL)
+        + _tlv("54", f"{valor:.2f}")                          # Valor da cobrança
+        + _tlv("58", "BR")                                   # País
+        + _tlv("59", NOME_RECEBEDOR[:25])                    # Nome do recebedor
+        + _tlv("60", CIDADE_RECEBEDOR[:15])                  # Cidade do recebedor
+        + _tlv("62", _tlv("05", id_transacao[:25]))           # Identificador da transação (txid)
+        + "6304"                                             # ID + tamanho do campo de CRC
+    )
+    crc = _calcular_crc16(payload_sem_crc)
+    return payload_sem_crc + crc
+
+
+@app.post("/gerar-pix")
+def gerar_pix(dados: PixRequest):
+    if dados.amount <= 0:
+        raise HTTPException(status_code=400, detail="Valor inválido para gerar cobrança Pix.")
+
+    id_transacao = str(uuid.uuid4())[:8].upper()
+    payload = gerar_payload_pix(dados.amount, id_transacao)
+
+    # Gera a imagem do QR Code em memória (sem salvar em disco) e converte para base64,
+    # já pronta pra ser exibida direto num ft.Image no Flet.
+    qr_img = qrcode.make(payload)
+    buffer = io.BytesIO()
+    qr_img.save(buffer, format="PNG")
+    qr_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+    return {
+        "payload": payload,
+        "qr_code_base64": qr_base64,
+        "id_transacao": id_transacao,
+        "amount": dados.amount,
+    }
+
 
 @app.get("/detectar-veiculo")
 def detectar_veiculo():
