@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from enum import Enum
 from api.pagamento import process_payment, PaymentError
 import random
 import datetime
@@ -41,9 +42,14 @@ CARROS = [
 class ReciboRequest(BaseModel):
     kwh_acumulado: float
 
+class MetodoPagamento(str, Enum):
+    credito = "credito"
+    debito = "debito"
+    pix = "pix"
+
 class PagamentoRequest(BaseModel):
     amount: float
-    method: str = "credit_card"
+    method: MetodoPagamento
 
 class PixRequest(BaseModel):
     amount: float
@@ -166,7 +172,7 @@ def gerar_recibo(dados: ReciboRequest):
 @app.post("/pagamento")
 def gerar_pagamento(dados: PagamentoRequest):
     try:
-        return process_payment(dados.amount, dados.method)
+        return process_payment(dados.amount, dados.method.value)
     except PaymentError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

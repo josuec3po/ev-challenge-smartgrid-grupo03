@@ -28,5 +28,85 @@
         "custo_total": 58.26450000000003,
         "status": "CONCLUIDO",
         "data_hora": "25/09/2026 18:30"
+    },
+    {
+        "id_sessao": 37817,
+        "veiculo": "GWM Ora 03 (GT)",
+        "tipo_carregador": "Pot. máx AC: 11.0 kW",
+        "energia_kWh": 46.2,
+        "tempo_min": 0,
+        "custo_total": 87.71700000000006,
+        "status": "CONCLUIDO",
+        "data_hora": "25/09/2026 18:46"
+    },
+    {
+        "id_sessao": 72359,
+        "veiculo": "Hyundai Ioniq 5 (Top)",
+        "tipo_carregador": "Pot. máx AC: 11.0 kW",
+        "energia_kWh": 58.0,
+        "tempo_min": 0,
+        "custo_total": 108.78,
+        "status": "PARCIAL",
+        "data_hora": "25/09/2026 19:14"
+    },
+    {
+        "id_sessao": 65263,
+        "veiculo": "Nissan Leaf (Tekna)",
+        "tipo_carregador": "Pot. máx AC: 6.6 kW",
+        "energia_kWh": 4.2,
+        "tempo_min": 0,
+        "custo_total": 12.75,
+        "status": "PARCIAL",
+        "data_hora": "25/09/2026 19:15"
+    },
+    {
+        "id_sessao": 55685,
+        "veiculo": "BMW iX3 (M Sport)",
+        "tipo_carregador": "Pot. máx AC: 11.0 kW",
+        "energia_kWh": 2.2,
+        "tempo_min": 0,
+        "custo_total": 9.18,
+        "status": "PARCIAL",
+        "data_hora": "25/09/2026 19:15"
+    },
+    {
+        "id_sessao": 32847,
+        "veiculo": "Peugeot e-208 GT",
+        "tipo_carregador": "Pot. máx AC: 11.0 kW",
+        "energia_kWh": 3.3,
+        "tempo_min": 0,
+        "custo_total": 11.14,
+        "status": "PARCIAL",
+        "data_hora": "25/09/2026 19:16"
+    },
+    {
+        "id_sessao": 51749,
+        "veiculo": "Renault Megane E-Tech",
+        "tipo_carregador": "Pot. máx AC: 22.0 kW",
+        "energia_kWh": 6.0,
+        "tempo_min": 0,
+        "custo_total": 15.96,
+        "status": "PARCIAL",
+        "data_hora": "25/09/2026 19:44"
+    },
+    {
+        "id_sessao": 61444,
+        "veiculo": "Hyundai Ioniq 5 (Top)",
+        "tipo_carregador": "Pot. máx AC: 11.0 kW",
+        "energia_kWh": 3.3,
+        "tempo_min": 0,
+        "custo_total": 11.14,
+        "status": "PARCIAL",
+        "data_hora": "25/09/2026 19:48"
+    },
+    {
+        "id_sessao": 39123,
+        "veiculo": "VW ID.4 (Pro)",
+        "tipo_carregador": "Pot. máx AC: 11.0 kW",
+        "energia_kWh": 42.9,
+        "tempo_min": 0,
+        "custo_total": 81.83,
+        "status": "PARCIAL",
+        "data_hora": "26/09/2026 16:46"
     }
 ]
