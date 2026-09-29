@@ -108,5 +108,95 @@
         "custo_total": 81.83,
         "status": "PARCIAL",
         "data_hora": "26/09/2026 16:46"
+    },
+    {
+        "id_sessao": 32017,
+        "veiculo": "Peugeot e-208 GT",
+        "tipo_carregador": "11.0 kW AC",
+        "energia_kWh": 34.5,
+        "tempo_min": 198,
+        "custo_total": 66.83,
+        "status": "CONCLUIDO",
+        "data_hora": "29/09/2026 15:37"
+    },
+    {
+        "id_sessao": 57750,
+        "veiculo": "BYD Dolphin (Entrada)",
+        "tipo_carregador": "7.0 kW AC",
+        "energia_kWh": 33.76,
+        "tempo_min": 289,
+        "custo_total": 65.51,
+        "status": "CONCLUIDO",
+        "data_hora": "25/09/2026 17:38"
+    },
+    {
+        "id_sessao": 72281,
+        "veiculo": "BYD Dolphin (Entrada)",
+        "tipo_carregador": "7.0 kW AC",
+        "energia_kWh": 44.65,
+        "tempo_min": 382,
+        "custo_total": 84.95,
+        "status": "PARCIAL",
+        "data_hora": "25/09/2026 13:38"
+    },
+    {
+        "id_sessao": 99014,
+        "veiculo": "Audi Q8 e-tron (55)",
+        "tipo_carregador": "22.0 kW AC",
+        "energia_kWh": 5.64,
+        "tempo_min": 15,
+        "custo_total": 15.32,
+        "status": "CONCLUIDO",
+        "data_hora": "07/09/2026 23:38"
+    },
+    {
+        "id_sessao": 77067,
+        "veiculo": "Audi Q8 e-tron (55)",
+        "tipo_carregador": "22.0 kW AC",
+        "energia_kWh": 94.54,
+        "tempo_min": 257,
+        "custo_total": 174.0,
+        "status": "CONCLUIDO",
+        "data_hora": "20/09/2026 07:38"
+    },
+    {
+        "id_sessao": 70818,
+        "veiculo": "Volvo XC40 Recharge",
+        "tipo_carregador": "11.0 kW AC",
+        "energia_kWh": 36.19,
+        "tempo_min": 197,
+        "custo_total": 69.85,
+        "status": "PARCIAL",
+        "data_hora": "07/09/2026 23:38"
+    },
+    {
+        "id_sessao": 94381,
+        "veiculo": "Nissan Leaf (Tekna)",
+        "tipo_carregador": "6.6 kW AC",
+        "energia_kWh": 18.36,
+        "tempo_min": 166,
+        "custo_total": 38.02,
+        "status": "CONCLUIDO",
+        "data_hora": "13/09/2026 04:38"
+    },
+    {
+        "id_sessao": 69464,
+        "veiculo": "Hyundai Ioniq 5 (Top)",
+        "tipo_carregador": "11.0 kW AC",
+        "energia_kWh": 29.77,
+        "tempo_min": 162,
+        "custo_total": 58.39,
+        "status": "PARCIAL",
+        "data_hora": "31/08/2026 12:38"
+    },
+    {
+        "id_sessao": 31355,
+        "veiculo": "Hyundai Ioniq 5 (Top)",
+        "tipo_carregador": "11.0 kW AC",
+        "energia_kWh": 53.82,
+        "tempo_min": 293,
+        "custo_total": 101.32,
+        "status": "CONCLUIDO",
+        "data_hora": "01/09/2026 04:38"
     }
 ]

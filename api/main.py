@@ -10,6 +10,14 @@ import uuid
 import io
 import base64
 import qrcode
+import time
+from api.sessoes import (
+    SessaoRecarga, CAMPOS_ORDENAVEIS,
+    carregar_sessoes, salvar_sessoes,
+    busca_linear_por_id, busca_linear_por_veiculo,
+    insertion_sort, merge_sort,
+    calcular_estatisticas, gerar_relatorio_texto,
+)
 
 app = FastAPI(title="GoodWe API - SmartGrid EV")
 
@@ -177,32 +185,105 @@ def gerar_pagamento(dados: PagamentoRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 # 2. A Rota de Persistência
+# ─────────────────────────────────────────────────────────────────────────────
+# SESSÕES: armazenamento, busca, ordenação, estatísticas e relatório
+# ─────────────────────────────────────────────────────────────────────────────
 @app.post("/salvar-historico")
 def salvar_historico(dados: BancoDadosRequest):
-    
-    
-    hora_agora = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
-    
-    # Converte o objeto Pydantic para um dicionário Python
-    novo_registro = dados.model_dump() # Se usar uma versão mais antiga do Pydantic, troque por dados.dict()
-    novo_registro["data_hora"] = hora_agora # Injeta a data gerada pela API
-    
-    caminho_arquivo = "database.json"
-    historico_atual = []
-    
-    # Evita crash se o arquivo não existir ou estiver vazio)
-    if os.path.exists(caminho_arquivo):
-        try:
-            with open(caminho_arquivo, "r", encoding="utf-8") as f:
-                historico_atual = json.load(f)
-        except json.JSONDecodeError:
-            historico_atual = [] # Se o JSON estiver corrompido, força uma nova lista
-            
-    # Passo C: Atualização da lista na memória RAM
-    historico_atual.append(novo_registro)
-    
-    # Sobrescreve arquivo com a lista nova, formatada e indentada)
-    with open(caminho_arquivo, "w", encoding="utf-8") as f:
-        json.dump(historico_atual, f, indent=4, ensure_ascii=False)
-        
-    return {"mensagem": "Sessão salva com sucesso!", "total_registros": len(historico_atual)}
+    print(f"[API] POST /salvar-historico -> sessão {dados.id_sessao}")
+    sessoes = carregar_sessoes()
+    nova = SessaoRecarga(
+        **dados.model_dump(),
+        data_hora=datetime.datetime.now().strftime("%d/%m/%Y %H:%M"),
+    )
+    sessoes.append(nova)          # append -> O(1)
+    salvar_sessoes(sessoes)
+    return {"mensagem": "Sessão salva com sucesso!", "total_registros": len(sessoes)}
+
+
+@app.get("/sessoes")
+def listar_sessoes():
+    print("[API] GET /sessoes -> listagem")
+    sessoes = carregar_sessoes()
+    return {"total": len(sessoes), "sessoes": [s.to_dict() for s in sessoes]}
+
+
+@app.get("/sessoes/busca")
+def buscar_sessao(id_sessao: int | None = None, veiculo: str | None = None):
+    print(f"[API] GET /sessoes/busca -> id={id_sessao} veiculo={veiculo}")
+    sessoes = carregar_sessoes()
+    if id_sessao is not None:
+        sessao, comparacoes = busca_linear_por_id(sessoes, id_sessao)
+        achadas = [sessao] if sessao else []
+    elif veiculo:
+        achadas, comparacoes = busca_linear_por_veiculo(sessoes, veiculo)
+    else:
+        raise HTTPException(status_code=400, detail="Informe id_sessao ou veiculo.")
+    return {
+        "algoritmo": "Busca Linear", "complexidade": "O(n)",
+        "comparacoes": comparacoes, "total_sessoes": len(sessoes),
+        "sessoes": [s.to_dict() for s in achadas],
+    }
+
+
+@app.get("/sessoes/ordenar")
+def ordenar_sessoes(campo: str = "energia_kWh", ordem: str = "asc", algoritmo: str = "insertion"):
+    if campo not in CAMPOS_ORDENAVEIS:
+        raise HTTPException(status_code=400, detail=f"Campo inválido. Use: {CAMPOS_ORDENAVEIS}")
+    if algoritmo not in ("insertion", "merge"):
+        raise HTTPException(status_code=400, detail="Algoritmo inválido (insertion ou merge).")
+
+    print(f"[API] GET /sessoes/ordenar -> {algoritmo} por {campo} ({ordem})")
+    sessoes = carregar_sessoes()
+    if algoritmo == "insertion":
+        func, nome, big_o = insertion_sort, "Insertion Sort", "O(n²)"
+    else:
+        func, nome, big_o = merge_sort, "Merge Sort", "O(n log n)"
+
+    inicio = time.perf_counter()
+    ordenadas, comparacoes = func(sessoes, campo, ordem == "desc")
+    tempo_ms = round((time.perf_counter() - inicio) * 1000, 3)
+
+    return {
+        "algoritmo": nome, "complexidade": big_o, "campo": campo, "ordem": ordem,
+        "comparacoes": comparacoes, "tempo_ms": tempo_ms, "total_sessoes": len(sessoes),
+        "sessoes": [s.to_dict() for s in ordenadas],
+    }
+
+
+@app.get("/estatisticas")
+def estatisticas():
+    print("[API] GET /estatisticas")
+    return calcular_estatisticas(carregar_sessoes())
+
+
+@app.get("/relatorio")
+def relatorio():
+    print("[API] GET /relatorio")
+    return {"texto": gerar_relatorio_texto(carregar_sessoes())}
+
+
+@app.post("/sessoes/popular")
+def popular_sessoes(qtd: int = 8):
+    """Gera sessões fictícias para agilizar a demonstração."""
+    print(f"[API] POST /sessoes/popular -> {qtd} sessões")
+    sessoes = carregar_sessoes()
+    for _ in range(qtd):
+        carro = random.choice(CARROS)
+        energia = round(random.uniform(5, carro["capacidade_kwh"]), 2)
+        potencia = min(GW22K, carro["potencia_max_ac"])
+        tempo = max(1, int(energia / potencia * 60))
+        total = round((energia * VALOR_ENERGIA + 5.0) * 1.05, 2)
+        data = datetime.datetime.now() - datetime.timedelta(
+            days=random.randint(0, 30), hours=random.randint(0, 23)
+        )
+        sessoes.append(SessaoRecarga(
+            id_sessao=random.randint(10000, 99999),
+            veiculo=carro["modelo"],
+            tipo_carregador=f'{carro["potencia_max_ac"]} kW AC',
+            energia_kWh=energia, tempo_min=tempo, custo_total=total,
+            status=random.choice(["CONCLUIDO", "CONCLUIDO", "PARCIAL"]),
+            data_hora=data.strftime("%d/%m/%Y %H:%M"),
+        ))
+    salvar_sessoes(sessoes)
+    return {"mensagem": f"{qtd} sessões geradas.", "total_registros": len(sessoes)}

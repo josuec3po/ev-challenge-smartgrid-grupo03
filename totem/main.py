@@ -160,11 +160,11 @@ async def main(page: ft.Page):
             # =================================================================
             dados_para_salvar = {
                 "id_sessao": random.randint(10000, 99999),
-                "veiculo": txt_modelo.value,
-                "tipo_carregador": txt_potencia_max.value,
+                "veiculo": estado["veiculo_atual"],
+                "tipo_carregador": f'{estado["potencia_max_atual"]} kW AC',
                 "energia_kWh": round(estado["acumulo"], 2),
-                "tempo_min": estado.get("tempo_simulado_min", 0),
-                "custo_total": f"{recibo['total_rs']:.2f}",
+                "tempo_min": int(estado.get("tempo_simulado_min", 0)),
+                "custo_total": round(recibo["total_rs"], 2),
                 "status": "PARCIAL" if parcial else "CONCLUIDO"
             }
             await asyncio.to_thread(
@@ -187,6 +187,7 @@ async def main(page: ft.Page):
         carga = float(random.randint(10, 50))
         estado["estado_carga"] = carga
         estado["acumulo"] = 0.0
+        estado["tempo_simulado_min"] = 0.0
 
         while carga < 100 and estado["rodando"]:
             if estado["pausado"]:
@@ -215,6 +216,7 @@ async def main(page: ft.Page):
                 page.update()
 
             p = estado["p_real_val"]
+            estado["tempo_simulado_min"] += passo * 60   # cada passo = 0,1 h = 6 min simulados
             estado["acumulo"] += p * passo
             carga += (p * passo / capacidade) * 100
             
@@ -536,6 +538,7 @@ async def main(page: ft.Page):
                         botao("Pausar", on_pausar, COR_PAUSA, btn_pausar, visivel=False),
                         botao("Parar", on_parar, COR_ALERTA, btn_parar, visivel=False),
                         botao("Cancelar cabo", on_cancelar, "#555555", btn_cancelar, desabilitado=True),
+                        botao("Histórico", lambda e: page.run_task(ir_para_historico), "#555555", None),
                     ]),
                 ),
             ],
@@ -624,6 +627,170 @@ async def main(page: ft.Page):
                 ),
             ],
         ),
+    )
+
+        # ========================================================================================
+    # TELA DE HISTÓRICO / ANÁLISE (Sprint 4): listagem, busca, ordenação, estatísticas, relatório
+    # ========================================================================================
+    API = "http://127.0.0.1:8000"
+    estado_hist = {"campo": "energia_kWh", "decrescente": False, "algoritmo": "insertion"}
+
+    coluna_lista   = ft.Column(spacing=6)
+    txt_hist_info  = ft.Text("", size=11, color=COR_GW, font_family="Mono")
+    txt_hist_stats = ft.Text("", size=12, color=COR_TEXTO, font_family="Mono")
+    campo_busca    = ft.TextField(label="ID ou nome do veículo", text_size=12, expand=True)
+    btn_algoritmo  = ft.Ref[ft.FilledButton]()
+
+    async def api_chamar(metodo, caminho, params=None):
+        """Chama o backend Python. Interface -> API -> processamento -> resposta -> interface."""
+        try:
+            resp = await asyncio.to_thread(requests.request, metodo, f"{API}{caminho}", params=params)
+            resp.raise_for_status()
+            return resp.json()
+        except Exception:
+            txt_hist_info.value = "Erro: ligue a API primeiro!"
+            page.update()
+            return None
+
+    def renderizar_sessoes(sessoes):
+        coluna_lista.controls.clear()
+        if not sessoes:
+            coluna_lista.controls.append(
+                ft.Text("Nenhuma sessão encontrada.", size=12, color=COR_SUBTEXTO, font_family="Mono"))
+        for s in sessoes:
+            coluna_lista.controls.append(ft.Container(
+                padding=ft.Padding.all(8), border_radius=8, border=ft.Border.all(1, COR_BORDA),
+                content=ft.Column(spacing=2, controls=[
+                    ft.Text(f'#{s["id_sessao"]} — {s["veiculo"]}', size=12,
+                            weight=ft.FontWeight.BOLD, color=COR_TEXTO, font_family="Mono"),
+                    ft.Text(f'{s["energia_kWh"]:.2f} kWh | R$ {s["custo_total"]:.2f} | '
+                            f'{s["tempo_min"]} min | {s["status"]}\n{s["data_hora"]}',
+                            size=11, color=COR_SUBTEXTO, font_family="Mono"),
+                ]),
+            ))
+
+    async def carregar_historico(e=None):
+        dados = await api_chamar("GET", "/sessoes")
+        if dados is None:
+            return
+        renderizar_sessoes(dados["sessoes"])
+        txt_hist_info.value = f'{dados["total"]} sessão(ões) armazenada(s)'
+        page.update()
+
+    async def on_buscar(e):
+        termo = (campo_busca.value or "").strip()
+        if not termo:
+            await carregar_historico()
+            return
+        params = {"id_sessao": int(termo)} if termo.isdigit() else {"veiculo": termo}
+        dados = await api_chamar("GET", "/sessoes/busca", params)
+        if dados is None:
+            return
+        renderizar_sessoes(dados["sessoes"])
+        txt_hist_info.value = (f'{dados["algoritmo"]} {dados["complexidade"]} — '
+                               f'{dados["comparacoes"]} comparações em {dados["total_sessoes"]} sessões')
+        page.update()
+
+    async def on_ordenar(campo):
+        if estado_hist["campo"] == campo:
+            estado_hist["decrescente"] = not estado_hist["decrescente"]
+        else:
+            estado_hist["campo"], estado_hist["decrescente"] = campo, False
+        params = {
+            "campo": campo,
+            "ordem": "desc" if estado_hist["decrescente"] else "asc",
+            "algoritmo": estado_hist["algoritmo"],
+        }
+        dados = await api_chamar("GET", "/sessoes/ordenar", params)
+        if dados is None:
+            return
+        renderizar_sessoes(dados["sessoes"])
+        seta = "↓" if estado_hist["decrescente"] else "↑"
+        txt_hist_info.value = (f'{dados["algoritmo"]} {dados["complexidade"]} por {campo} {seta} — '
+                               f'{dados["comparacoes"]} comparações, {dados["tempo_ms"]} ms')
+        page.update()
+
+    def on_alternar_algoritmo(e):
+        if estado_hist["algoritmo"] == "insertion":
+            estado_hist["algoritmo"], nome = "merge", "Merge Sort"
+        else:
+            estado_hist["algoritmo"], nome = "insertion", "Insertion Sort"
+        btn_algoritmo.current.content = ft.Text(f"Algoritmo: {nome}", font_family="Mono", size=12, weight=ft.FontWeight.BOLD)
+        page.update()
+
+    async def on_estatisticas(e):
+        d = await api_chamar("GET", "/estatisticas")
+        if d is None:
+            return
+        txt_hist_stats.value = (
+            f'Total de sessões: {d["total_sessoes"]}\n'
+            f'Energia total:    {d["energia_total_kWh"]} kWh\n'
+            f'Energia média:    {d["energia_media_kWh"]} kWh\n'
+            f'Receita total:    R$ {d["receita_total"]}\n'
+            f'Ticket médio:     R$ {d["ticket_medio"]}'
+        )
+        page.update()
+
+    async def on_relatorio(e):
+        d = await api_chamar("GET", "/relatorio")
+        if d is None:
+            return
+        txt_hist_stats.value = d["texto"]
+        page.update()
+
+    async def on_popular(e):
+        await api_chamar("POST", "/sessoes/popular", {"qtd": 8})
+        await carregar_historico()
+
+    async def ir_para_historico():
+        switcher.content = tela_historico
+        page.update()
+        await carregar_historico()
+
+    def voltar_do_historico(e):
+        switcher.content = tela_principal
+        page.update()
+
+    tela_historico = ft.Container(
+        key="historico", expand=True, bgcolor=COR_BG,
+        content=ft.Column(scroll=ft.ScrollMode.AUTO, spacing=0, controls=[
+            ft.Container(
+                padding=ft.Padding.only(left=24, right=24, top=28, bottom=6),
+                content=ft.Row(controls=[
+                    ft.Icon(ft.Icons.HISTORY, color=COR_GW, size=26),
+                    ft.Text("Histórico de Sessões", size=18, color=COR_GW, weight=ft.FontWeight.BOLD, font_family="Mono"),
+                ]),
+            ),
+            ft.Container(
+                padding=ft.Padding.symmetric(horizontal=16, vertical=4),
+                content=ft.Row(spacing=8, controls=[
+                    campo_busca,
+                    botao("Buscar", lambda e: page.run_task(on_buscar, e), COR_GW, None),
+                ]),
+            ),
+            ft.Container(
+                padding=ft.Padding.symmetric(horizontal=16, vertical=4),
+                content=ft.Row(spacing=6, wrap=True, controls=[
+                    botao("kWh", lambda e: page.run_task(on_ordenar, "energia_kWh"), COR_GW_ESCURO, None),
+                    botao("R$",  lambda e: page.run_task(on_ordenar, "custo_total"), COR_GW_ESCURO, None),
+                    botao("Min", lambda e: page.run_task(on_ordenar, "tempo_min"), COR_GW_ESCURO, None),
+                    botao("Data", lambda e: page.run_task(on_ordenar, "data_hora"), COR_GW_ESCURO, None),
+                    botao("Algoritmo: Insertion Sort", on_alternar_algoritmo, "#555555", btn_algoritmo),
+                ]),
+            ),
+            ft.Container(padding=ft.Padding.symmetric(horizontal=24, vertical=4), content=txt_hist_info),
+            secao("SESSÕES", coluna_lista),
+            secao("ESTATÍSTICAS / RELATÓRIO", txt_hist_stats),
+            ft.Container(
+                padding=ft.Padding.symmetric(horizontal=16, vertical=10),
+                content=ft.Row(spacing=8, wrap=True, controls=[
+                    botao("Estatísticas", lambda e: page.run_task(on_estatisticas, e), COR_VERDE, None),
+                    botao("Relatório", lambda e: page.run_task(on_relatorio, e), COR_VERDE, None),
+                    botao("Gerar sessões demo", lambda e: page.run_task(on_popular, e), COR_PAUSA, None),
+                    botao("Voltar", voltar_do_historico, "#555555", None),
+                ]),
+            ),
+        ]),
     )
 
     logo_icon = ft.Container(opacity=0, animate_opacity=ft.Animation(duration=1200, curve=ft.AnimationCurve.EASE_IN_OUT), content=ft.Icon(ft.Icons.BOLT, color=COR_GW, size=80))
