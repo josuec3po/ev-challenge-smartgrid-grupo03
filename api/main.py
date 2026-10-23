@@ -1,12 +1,14 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from api.pagamento import process_payment, PaymentError
+from api.rotas_energia import router as rotas_energia, leitura_atual
 import random
 import datetime
 import json
 import os
 
 app = FastAPI(title="GoodWe API - SmartGrid EV")
+app.include_router(rotas_energia)
 
 # Constantes de Negócio
 GW22K = 22
@@ -59,7 +61,9 @@ def detectar_veiculo():
     return {
         "carro": carro,
         "numero_carros": num_carros,
-        "potencia_real": p_real
+        "potencia_real": p_real,
+        # de onde vem a energia neste momento (sol, bateria Lynx ou rede)
+        "energia_agora": leitura_atual(),
     }
 
 @app.get("/recalcular-potencia")

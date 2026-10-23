@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+<title>GoodWe SmartGrid EV — Monitoramento</title>
+<!-- Chart.js 4.4.1 servido localmente: o dashboard funciona sem internet no posto -->
+<script src="/dashboard/vendor/chart.umd.js"></script>
+<style>
+  :root {
+    --gw: #E50012; --gw-escuro: #9E000D; --verde: #2E9E4F; --amarelo: #F2A900; --azul: #1E6FD9;
+    --bg: #F4F5F7; --card: #FFFFFF; --borda: #E1E3E8; --texto: #1B1B1B; --sub: #5F6570;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--texto); }
+  header { background: var(--gw); color: #fff; padding: 14px 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; }
+  header h1 { margin: 0; font-size: 20px; letter-spacing: .5px; }
+  header small { opacity: .85; display: block; font-size: 12px; }
+  .controles { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; font-size: 13px; }
+  select, input[type=text], button { font: inherit; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--borda); }
+  button { background: var(--gw); color: #fff; border: none; cursor: pointer; font-weight: 600; }
+  button.sec { background: #fff; color: var(--gw); border: 1px solid var(--gw); }
+  main { max-width: 1280px; margin: 0 auto; padding: 18px 16px 40px; display: grid; gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--borda); border-radius: 10px; padding: 16px; min-width: 0; }
+  .card h2 { margin: 0 0 12px; font-size: 13px; letter-spacing: 1.5px; color: var(--gw); text-transform: uppercase; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .kpi { background: var(--card); border: 1px solid var(--borda); border-left: 4px solid var(--gw); border-radius: 10px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; }
+  .kpi .l { font-size: 12px; color: var(--sub); }
+  .kpi .d { font-size: 12px; color: var(--verde); font-weight: 600; margin-top: 2px; }
+  .duas { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .duas { grid-template-columns: 1fr; } }
+  .fluxo { display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: auto auto auto; gap: 8px; text-align: center; font-size: 13px; }
+  .no { border: 2px solid var(--borda); border-radius: 10px; padding: 8px; }
+  .no b { display: block; font-size: 18px; }
+  .no.ativo { border-color: var(--verde); background: #EEF8F1; }
+  .no.rede.ativo { border-color: var(--gw); background: #FDECEE; }
+  .no.centro { border-color: var(--gw); }
+  .relogio { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 13px; }
+  .relogio input { flex: 1; accent-color: var(--gw); }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; color: #fff; }
+  .tag.fora_ponta { background: var(--verde); } .tag.intermediario { background: var(--amarelo); } .tag.ponta { background: var(--gw); }
+  ul.alertas { list-style: none; margin: 0; padding: 0; max-height: 300px; overflow: auto; font-size: 13px; }
+  ul.alertas li { border-left: 4px solid var(--azul); padding: 6px 10px; margin-bottom: 6px; background: #F7F9FC; border-radius: 4px; }
+  ul.alertas li.critico { border-color: var(--gw); background: #FDECEE; }
+  ul.alertas li.aviso { border-color: var(--amarelo); background: #FFF8E5; }
+  ul.alertas li small { color: var(--sub); display: block; }
+  .chat { display: flex; flex-direction: column; gap: 8px; }
+  .msgs { height: 220px; overflow: auto; background: #F7F8FA; border-radius: 8px; padding: 8px; font-size: 13px; }
+  .msgs p { margin: 6px 0; padding: 8px 10px; border-radius: 8px; max-width: 90%; }
+  .msgs .eu { background: var(--gw); color: #fff; margin-left: auto; }
+  .msgs .bot { background: #fff; border: 1px solid var(--borda); }
+  .chat form { display: flex; gap: 6px; } .chat input { flex: 1; }
+  .sugestoes button { font-size: 11px; padding: 4px 8px; margin: 2px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--borda); }
+  th { color: var(--sub); font-weight: 600; }
+  .tabela { overflow-x: auto; }
+  .grafico { position: relative; height: 300px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>⚡ GoodWe SmartGrid EV</h1>
+    <small>Monitoramento do eletroposto: inversores ET · bateria Lynx · carregadores HCA G2</small>
+  </div>
+  <div class="controles">
+    <label>Clima <select id="clima">
+      <option value="ensolarado">☀️ Ensolarado</option>
+      <option value="parcial">⛅ Parcial</option>
+      <option value="nublado">☁️ Nublado</option>
+    </select></label>
+    <label>Estratégia <select id="estrategia">
+      <option value="inteligente">Inteligente (GoodWe + algoritmo)</option>
+      <option value="solar_basico">Solar básico</option>
+      <option value="convencional">Convencional (só rede)</option>
+    </select></label>
+    <label><input type="checkbox" id="falha"> Simular falha de string</label>
+  </div>
+</header>
+
+<main>
+  <section class="kpis" id="kpis"></section>
+
+  <section class="duas">
+    <div class="card">
+      <h2>Fluxo de potência ao longo do dia</h2>
+      <div class="grafico"><canvas id="gFluxo"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>Agora <span id="tagPosto" class="tag"></span></h2>
+      <div class="fluxo">
+        <div></div><div class="no" id="nSolar">☀️ Solar<b>—</b></div><div></div>
+        <div class="no rede" id="nRede">🔌 Rede<b>—</b></div>
+        <div class="no centro" id="nPosto">🏪 Posto<b>—</b></div>
+        <div class="no" id="nVe">🚗 Veículos<b>—</b></div>
+        <div></div><div class="no" id="nBat">🔋 Bateria<b>—</b></div><div></div>
+      </div>
+      <div class="relogio">
+        <span id="hora">12:00</span>
+        <input type="range" id="slider" min="0" max="95" value="48">
+        <button class="sec" id="play">▶</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="duas">
+    <div class="card">
+      <h2>Estado de carga da bateria Lynx e tarifa</h2>
+      <div class="grafico"><canvas id="gSoc"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>Alertas do monitoramento</h2>
+      <ul class="alertas" id="alertas"></ul>
+    </div>
+  </section>
+
+  <section class="duas">
+    <div class="card">
+      <h2>Comparativo entre estratégias</h2>
+      <div class="grafico"><canvas id="gComp"></canvas></div>
+    </div>
+    <div class="card chat">
+      <h2>Assistente virtual</h2>
+      <div class="msgs" id="msgs"><p class="bot">Olá! Pergunte sobre economia, CO2, bateria, geração solar ou o melhor horário para carregar.</p></div>
+      <div class="sugestoes">
+        <button class="sec" data-q="Quanto economizamos hoje?">Economia</button>
+        <button class="sec" data-q="Quanto CO2 evitamos?">CO2</button>
+        <button class="sec" data-q="Como está a bateria?">Bateria</button>
+        <button class="sec" data-q="Tem algum alerta?">Alertas</button>
+        <button class="sec" data-q="Qual o melhor horário para carregar?">Horário</button>
+      </div>
+      <form id="formChat"><input type="text" id="pergunta" placeholder="Digite sua pergunta..."><button>Enviar</button></form>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Sessões de recarga</h2>
+    <div class="tabela"><table id="sessoes"></table></div>
+  </section>
+</main>
+
+<script>
+const API = location.origin;
+const cores = { solar: "#F2A900", consumo: "#1B1B1B", rede: "#E50012", bateria: "#2E9E4F", ve: "#1E6FD9" };
+let dados = null, graficos = {}, timer = null;
+
+const fmt = (v, d = 0) => Number(v).toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
+const params = () => {
+  const p = new URLSearchParams({ clima: clima.value, falha_string: falha.checked });
+  return p;
+};
+
+async function carregar() {
+  const p = params();
+  const est = estrategia.value;
+  const [sim, comp, alertas] = await Promise.all([
+    fetch(`${API}/energia/simulacao?estrategia=${est}&${p}`).then(r => r.json()),
+    fetch(`${API}/energia/comparativo?${p}`).then(r => r.json()),
+    fetch(`${API}/energia/alertas?estrategia=${est}&${p}`).then(r => r.json()),
+  ]);
+  dados = sim;
+  desenharKpis(sim.kpis, comp);
+  desenharFluxo(sim.serie);
+  desenharSoc(sim.serie);
+  desenharComparativo(comp.kpis);
+  desenharAlertas(alertas);
+  desenharSessoes(sim.sessoes);
+  atualizarAgora();
+}
+
+function desenharKpis(k, comp) {
+  const g = comp.ganhos, conv = comp.kpis.convencional;
+  const diff = (a, b) => b ? `${fmt(100 * (b - a) / b)}% vs. só rede` : "";
+  const cards = [
+    ["☀️ Energia solar", `${fmt(k.energia_solar_kwh)} kWh`, `${fmt(k.autoconsumo_solar_pct)}% autoconsumo`],
+    ["🏠 Autossuficiência", `${fmt(k.autossuficiencia_pct)}%`, `rede: ${fmt(k.energia_rede_kwh)} kWh`],
+    ["💰 Custo da energia", `R$ ${fmt(k.custo_energia_rs, 2)}`, diff(k.custo_energia_rs, conv.custo_energia_rs)],
+    ["📈 Economia anual", `R$ ${fmt(g.economia_ano_rs)}`, `${fmt(g.reducao_custo_pct)}% menos na conta`],
+    ["⏱️ Rede na ponta", `${fmt(k.energia_rede_ponta_kwh)} kWh`, diff(k.energia_rede_ponta_kwh, conv.energia_rede_ponta_kwh)],
+    ["🌱 CO₂ evitado", `${fmt(k.co2_evitado_kg)} kg`, `≈ ${fmt(k.arvores_equivalentes_ano)} árvores/ano`],
+    ["🚗 Recargas completas", `${k.sessoes_concluidas}/${k.sessoes_total}`, `${fmt(k.energia_ve_kwh)} kWh entregues`],
+  ];
+  document.getElementById("kpis").innerHTML = cards.map(([l, v, d]) =>
+    `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="d">${d}</div></div>`).join("");
+}
+
+function grafico(id, cfg) {
+  if (graficos[id]) graficos[id].destroy();
+  graficos[id] = new Chart(document.getElementById(id), cfg);
+}
+
+const faixaPonta = {
+  id: "faixaPonta",
+  beforeDraw(chart) {
+    const { ctx, chartArea, scales } = chart;
+    if (!dados) return;
+    ctx.save();
+    dados.serie.forEach((p, i) => {
+      if (p.posto === "fora_ponta") return;
+      const x0 = scales.x.getPixelForValue(i), x1 = scales.x.getPixelForValue(i + 1);
+      ctx.fillStyle = p.posto === "ponta" ? "rgba(229,0,18,.08)" : "rgba(242,169,0,.08)";
+      ctx.fillRect(x0, chartArea.top, x1 - x0, chartArea.bottom - chartArea.top);
+    });
+    const xi = scales.x.getPixelForValue(+slider.value);
+    ctx.strokeStyle = "#9E000D"; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(xi, chartArea.top); ctx.lineTo(xi, chartArea.bottom); ctx.stroke();
+    ctx.restore();
+  },
+};
+
+const opcoesBase = {
+  responsive: true, maintainAspectRatio: false, animation: false,
+  interaction: { mode: "index", intersect: false },
+  plugins: { legend: { position: "bottom", labels: { boxWidth: 12 } } },
+  scales: { x: { ticks: { maxTicksLimit: 12 } } },
+};
+
+function desenharFluxo(serie) {
+  const ds = (label, key, cor, extra = {}) => ({ label, data: serie.map(key), borderColor: cor, backgroundColor: cor + "33", pointRadius: 0, borderWidth: 2, tension: .3, ...extra });
+  grafico("gFluxo", {
+    type: "line",
+    data: {
+      labels: serie.map(p => p.hora),
+      datasets: [
+        ds("Solar (kW)", p => p.solar_kw, cores.solar, { fill: true }),
+        ds("Recarga VEs (kW)", p => p.ve_kw, cores.ve),
+        ds("Loja (kW)", p => p.carga_kw, cores.consumo, { borderDash: [4, 3], borderWidth: 1.5 }),
+        ds("Rede (kW, + importa)", p => p.rede_kw, cores.rede),
+        ds("Bateria (kW, + descarrega)", p => p.bateria_kw, cores.bateria),
+      ],
+    },
+    options: { ...opcoesBase, scales: { ...opcoesBase.scales, y: { title: { display: true, text: "kW" } } } },
+    plugins: [faixaPonta],
+  });
+}
+
+function desenharSoc(serie) {
+  grafico("gSoc", {
+    type: "line",
+    data: {
+      labels: serie.map(p => p.hora),
+      datasets: [
+        { label: "SoC bateria (%)", data: serie.map(p => p.soc === null ? null : 100 * p.soc), borderColor: cores.bateria, backgroundColor: cores.bateria + "33", fill: true, pointRadius: 0, yAxisID: "y" },
+        { label: "Tarifa (R$/kWh)", data: serie.map(p => p.tarifa), borderColor: cores.rede, stepped: true, pointRadius: 0, yAxisID: "y1" },
+      ],
+    },
+    options: { ...opcoesBase, scales: { ...opcoesBase.scales,
+      y: { min: 0, max: 100, title: { display: true, text: "%" } },
+      y1: { position: "right", min: 0, max: 2, grid: { drawOnChartArea: false }, title: { display: true, text: "R$/kWh" } } } },
+    plugins: [faixaPonta],
+  });
+}
+
+function desenharComparativo(k) {
+  const nomes = { convencional: "Convencional", solar_basico: "Solar básico", inteligente: "Inteligente" };
+  const est = Object.keys(nomes);
+  grafico("gComp", {
+    type: "bar",
+    data: {
+      labels: ["Custo (R$)", "Energia da rede (kWh)", "Rede na ponta (kWh)", "CO₂ da rede (kg ×10)"],
+      datasets: est.map((e, i) => ({
+        label: nomes[e],
+        backgroundColor: ["#9AA0A6", "#F2A900", "#E50012"][i],
+        data: [k[e].custo_energia_rs, k[e].energia_rede_kwh, k[e].energia_rede_ponta_kwh, k[e].co2_rede_kg * 10],
+      })),
+    },
+    options: { ...opcoesBase, interaction: { mode: "index" } },
+  });
+}
+
+function desenharAlertas(lista) {
+  const el = document.getElementById("alertas");
+  el.innerHTML = lista.length ? lista.map(a =>
+    `<li class="${a.nivel}"><b>${a.hora}</b> · ${a.mensagem}<small>${a.acao}</small></li>`).join("")
+    : "<li>Nenhum alerta. Tudo dentro do esperado ✅</li>";
+}
+
+function desenharSessoes(sessoes) {
+  const h = p => { const m = p * 15; return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`; };
+  document.getElementById("sessoes").innerHTML =
+    "<tr><th>#</th><th>Veículo</th><th>Ponto</th><th>Chegada</th><th>Saída</th><th>Pedido</th><th>Entregue</th><th>Solar</th><th>Status</th></tr>" +
+    sessoes.map(s => `<tr><td>${s.id}</td><td>${s.veiculo}</td><td>${s.carregador ?? "—"}</td><td>${h(s.chegada)}</td><td>${h(s.saida)}</td>
+      <td>${fmt(s.energia_solicitada_kwh, 1)} kWh</td><td>${fmt(s.entregue_kwh, 1)} kWh</td><td>${fmt(s.entregue_solar_kwh, 1)} kWh</td>
+      <td>${s.inicio === null ? "❌ desistiu" : s.concluida ? "✅ completa" : "⚠️ parcial"}</td></tr>`).join("");
+}
+
+function atualizarAgora() {
+  if (!dados) return;
+  const p = dados.serie[+slider.value];
+  document.getElementById("hora").textContent = p.hora;
+  const tag = document.getElementById("tagPosto");
+  tag.className = `tag ${p.posto}`;
+  tag.textContent = p.posto.replace("_", " ") + ` · R$ ${fmt(p.tarifa, 2)}/kWh`;
+  const set = (id, txt, ativo) => { const n = document.getElementById(id); n.querySelector("b").textContent = txt; n.classList.toggle("ativo", ativo); };
+  set("nSolar", `${fmt(p.solar_kw, 1)} kW`, p.solar_kw > 0.5);
+  set("nRede", `${p.rede_kw >= 0 ? "" : "↑ "}${fmt(Math.abs(p.rede_kw), 1)} kW`, Math.abs(p.rede_kw) > 0.5);
+  set("nPosto", `${fmt(p.carga_kw + p.ve_kw, 1)} kW`, true);
+  set("nVe", `${fmt(p.ve_kw, 1)} kW · ${p.ve_conectados}`, p.ve_kw > 0.5);
+  const bat = p.soc === null ? "sem bateria" : `${p.bateria_kw >= 0 ? "↓" : "↑"} ${fmt(Math.abs(p.bateria_kw), 1)} kW · ${fmt(100 * p.soc)}%`;
+  set("nBat", bat, Math.abs(p.bateria_kw) > 0.5);
+  Object.values(graficos).forEach(g => g.draw());
+}
+
+async function perguntar(texto) {
+  const msgs = document.getElementById("msgs");
+  msgs.insertAdjacentHTML("beforeend", `<p class="eu">${texto.replace(/</g, "&lt;")}</p>`);
+  const r = await fetch(`${API}/energia/assistente`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pergunta: texto, clima: clima.value, falha_string: falha.checked }),
+  }).then(r => r.json());
+  msgs.insertAdjacentHTML("beforeend", `<p class="bot">${r.resposta.replace(/</g, "&lt;")}</p>`);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+[clima, estrategia, falha].forEach(el => el.addEventListener("change", carregar));
+slider.addEventListener("input", atualizarAgora);
+play.addEventListener("click", () => {
+  if (timer) { clearInterval(timer); timer = null; play.textContent = "▶"; return; }
+  play.textContent = "⏸";
+  timer = setInterval(() => { slider.value = (+slider.value + 1) % 96; atualizarAgora(); }, 250);
+});
+document.getElementById("formChat").addEventListener("submit", e => {
+  e.preventDefault();
+  const q = pergunta.value.trim(); if (!q) return;
+  pergunta.value = ""; perguntar(q);
+});
+document.querySelectorAll(".sugestoes button").forEach(b => b.addEventListener("click", () => perguntar(b.dataset.q)));
+
+const agora = new Date(); slider.value = Math.floor((agora.getHours() * 60 + agora.getMinutes()) / 15);
+carregar();
+</script>
+</body>
+</html>

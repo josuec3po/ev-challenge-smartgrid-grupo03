@@ -56,6 +56,7 @@ async def main(page: ft.Page):
     txt_potencia_max = ft.Text("—", size=13, color=COR_SUBTEXTO, font_family="Mono")
     txt_carros       = ft.Text("—", size=13, color=COR_GW,       font_family="Mono")
     txt_p_real       = ft.Text("—", size=13, color=COR_GW,       font_family="Mono")
+    txt_fonte        = ft.Text("—", size=12, color=COR_VERDE,    font_family="Mono")
     txt_pct          = ft.Text("0%",      size=34, color=COR_GW,      weight=ft.FontWeight.BOLD, font_family="Mono")
     txt_kwh          = ft.Text("0.00 kWh", size=12, color=COR_SUBTEXTO, font_family="Mono")
     txt_status_log   = ft.Text("Aguardando conexão...", size=12, color=COR_SUBTEXTO, font_family="Mono")
@@ -101,6 +102,12 @@ async def main(page: ft.Page):
             txt_potencia_max.value = f'Pot. máx AC: {carro["potencia_max_ac"]} kW'
             txt_carros.value       = f'{estado["numero_carros"]} carro(s) simultâneo(s)'
             txt_p_real.value       = f'Potência real: {estado["p_real_val"]} kW'
+
+            agora = resposta.get("energia_agora")
+            if agora:
+                txt_fonte.value = (f'Agora: {agora["fracao_solar_pct"]:.0f}% solar · '
+                                   f'{agora["fracao_bateria_pct"]:.0f}% bateria · '
+                                   f'{agora["fracao_rede_pct"]:.0f}% rede ({agora["posto"].replace("_", " ")})')
 
             estado["veiculo_atual"] = carro["modelo"]
         except Exception as e:
@@ -283,7 +290,7 @@ async def main(page: ft.Page):
         try:
             resp = requests.post(
                 "http://127.0.0.1:8000/pagamento",
-                json={"amount": estado["valor_total"], "method": "credit_card"}
+                json={"amount": estado.get("ultimo_valor_total", 0.0), "method": "credit_card"}
             )
             resp.raise_for_status()
             resultado = resp.json()
@@ -372,7 +379,7 @@ async def main(page: ft.Page):
                     ]),
                 ),
                 secao("VEÍCULO DETECTADO", txt_modelo, ft.Row(spacing=16, controls=[txt_tipo, txt_capacidade]), txt_potencia_max),
-                secao("REDE / BALANCEAMENTO", txt_carros, txt_p_real),
+                secao("REDE / BALANCEAMENTO", txt_carros, txt_p_real, txt_fonte),
                 ft.Container(
                     padding=ft.Padding.all(16), margin=ft.Margin.symmetric(horizontal=16, vertical=5),
                     bgcolor=COR_CARD, border_radius=10, border=ft.Border.all(1, COR_BORDA),
@@ -436,7 +443,7 @@ async def main(page: ft.Page):
             controls=[
                 ft.Container(height=80), logo_icon, ft.Container(height=16), logo_texto, ft.Container(height=8), logo_sub, ft.Container(height=80),
                 ft.GestureDetector(on_tap=lambda e: page.run_task(entrar_na_tela_principal), content=toque_hint),
-                ft.Container(height=40), ft.Text("v1.0 — SPRINT 2", size=10, color=COR_BORDA, style=ft.TextStyle(font_family="Mono", letter_spacing=1)),
+                ft.Container(height=40), ft.Text("v2.0 — SPRINT 4", size=10, color=COR_BORDA, style=ft.TextStyle(font_family="Mono", letter_spacing=1)),
             ],
         ),
     )

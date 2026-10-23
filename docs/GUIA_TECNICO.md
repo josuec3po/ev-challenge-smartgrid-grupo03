@@ -91,35 +91,31 @@ recibo = requests.post("[http://127.0.0.1:8000/gerar-recibo](http://127.0.0.1:80
 | `/recalcular-potencia` | `GET` | Recalcula a divisão de carga em caso de flutuação da rede. | Query Params: `num_carros`, `potencia_max_carro` | Nova `potencia_real`. |
 | `/gerar-recibo` | `POST` | Processa valores tarifários, taxas fixas e impostos (ISS 5%). | JSON Body (`ReciboRequest`) | Valores de consumo, taxas, imposto e `total_rs`. |
 
+As rotas de energia adicionadas na Sprint 4 (`/energia/...` e `/dashboard`) estão descritas no README.
+
 ---
 
 ## Como Executar
 
+Todos os comandos são executados **na raiz do repositório**.
+
 1. **Instale as dependências:**
 ```bash
-pip install fastapi uvicorn requests pydantic flet
-
+pip install -r requirements.txt
 ```
-
 
 2. **Inicie a API (Terminal 1):**
 ```bash
-cd api
-uvicorn main:app --reload
-
+uvicorn api.main:app --reload
 ```
+Documentação interativa: `http://127.0.0.1:8000/docs` · Dashboard: `http://127.0.0.1:8000/dashboard`
 
-
-*Documentação interativa disponível em: `http://127.0.0.1:8000/docs*`
 3. **Inicie o Totem (Terminal 2):**
 ```bash
-cd totem
-flet run flet_proposta_gw.py
-
+python run.py
 ```
 
-
-
-```
-
+4. **Rode os testes:**
+```bash
+python -m pytest
 ```

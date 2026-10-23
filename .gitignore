@@ -9,3 +9,5 @@ __pycache__/
 venv/
 env/
 .flet/
+# Testes
+.pytest_cache/

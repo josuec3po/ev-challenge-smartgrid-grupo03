@@ -16,3 +16,12 @@ A separação do código base em uma API (`FastAPI`) e um Client Visual (`Flet`)
 2. O Totem dispara requisições HTTP (`GET`, `POST`) de forma invisível.
 3. A **API (FastAPI)** recebe, valida, processa a matemática dos circuitos virtuais e retorna um arquivo JSON.
 4. O Totem lê o JSON e renderiza as atualizações na tela sem travar a interface.
+
+## 4. Sprint 4: do totem ao eletroposto integrado
+Na Sprint 4 a API ganhou o pacote `energia/`, que simula a geração solar (inversores híbridos GoodWe série ET), o armazenamento (baterias Lynx) e a recarga (HCA G2) num mesmo balanço de potência, decidido a cada 15 minutos por um algoritmo de despacho.
+
+* **Separação mantida:** o totem e o novo dashboard continuam sem regra de negócio; tudo passa pela API (`api/rotas_energia.py`).
+* **Núcleo testável:** o pacote `energia/` não depende de FastAPI nem de Flet, então é testado isoladamente (`tests/test_energia.py`).
+* **Pronto para dados reais:** `energia/perfis.py` é a única peça que gera dados; numa instalação real ela seria trocada pela leitura do SEMS Portal ou Modbus dos inversores, sem mexer no algoritmo.
+
+O diagrama completo da arquitetura final está no README.
